@@ -35,7 +35,7 @@ func NewDecayBloom(bf *bloom.BloomFilter, key string) *DecayBloom {
 		bloom:    bf,
 		key:      key,
 		lastUsed: time.Now(),
-		decay:    time.Second * 75,
+		decay:    config.DecayBloomConfig.Decay,
 	}
 }
 
@@ -81,6 +81,10 @@ func (db *DecayBloom) BitSet() *bitset.BitSet {
 
 func (dbs *DecayBlooms) Remove(key string) {
 	delete(dbs.blooms, key)
+}
+
+func (dbs *DecayBlooms) Set(db *DecayBloom, key string) {
+	dbs.blooms[key] = db
 }
 
 func (db *DecayBloom) Hash(value string) {
