@@ -7,6 +7,20 @@ import (
 
 var dbs = models.NewDecayBlooms()
 
+// Get each bloom stored in memory
+func BloomList() []*models.DecayBloom {
+	return dbs.GetBlooms()
+}
+
+// Get each bloom stored in memory
+func BloomGet(key string) *models.DecayBloom {
+	db, ok := dbs.GetBloom(key)
+	if ok {
+		return db
+	}
+	return nil
+}
+
 // Check in memory for the bloom filter
 // Not exist -> check in database
 // Not exist -> create a new one
@@ -32,10 +46,18 @@ func BloomHash(key, value string) {
 
 	// Add into memory
 	dbs.Set(db, key)
+
+	// Update database
+	BloomUpdate(db)
 }
 
-// After 2s, spawn a goroutine to sync data in memory with database
-func BloomUpdate() {
+// Sync data in memory with database (prototype)
+func BloomUpdate(db *models.DecayBloom) {
+	query := "UPDATE bloom_filters SET bloombyte = $2 WHERE key = $1;"
+	tx, _ := postgres.DbClient.Begin()
+	byterepr, _ := db.Bloom().GobEncode()
+	postgres.DbClient.Exec(query, db.Key(), byterepr)
+	tx.Commit()
 }
 
 // If time.Now() - time.LastUpdate() >= decayDuration

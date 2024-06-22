@@ -52,6 +52,15 @@ func NewDefaultDecayBloom(key string) *DecayBloom {
 
 // GETTERS
 
+func (dbs *DecayBlooms) GetBlooms() []*DecayBloom {
+	output := []*DecayBloom{}
+	for key := range dbs.blooms {
+		db := dbs.blooms[key]
+		output = append(output, db)
+	}
+	return output
+}
+
 func (dbs *DecayBlooms) GetBloom(key string) (*DecayBloom, bool) {
 	db, ok := dbs.blooms[key]
 	return db, ok
@@ -77,6 +86,10 @@ func (db *DecayBloom) BitSet() *bitset.BitSet {
 	return db.bloom.BitSet()
 }
 
+func (db *DecayBloom) ApproximatedSize() uint32 {
+	return db.bloom.ApproximatedSize()
+}
+
 // SETTERS
 
 func (dbs *DecayBlooms) Remove(key string) {
@@ -92,6 +105,10 @@ func (db *DecayBloom) Hash(value string) {
 }
 
 // MORE LOGICS
+
+func (db *DecayBloom) CheckExists(value string) bool {
+	return db.bloom.TestString(value)
+}
 
 func (dbs *DecayBlooms) CheckDecayed(key string) bool {
 	currentTime := time.Now().UTC()
