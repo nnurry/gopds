@@ -109,7 +109,7 @@ func GetBloomFromDB(key string) (*DecayBloom, error) {
 	var err error
 	record := &PGBloom{}
 	query := "SELECT key, bloombyte FROM bloom_filters WHERE key = $1"
-	err = postgres.DbClient.QueryRow(query, key).Scan(&record)
+	err = postgres.DbClient.QueryRow(query, key).Scan(&record.Key, &record.Bloombyte)
 	if err != nil {
 		return nil, err
 	}
