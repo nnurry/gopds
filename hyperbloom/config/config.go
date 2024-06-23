@@ -2,13 +2,13 @@ package config
 
 import "time"
 
-type DecayBloom struct {
+type HyperBloom struct {
 	FalsePositive float64
 	Cardinality   uint
 	Decay         time.Duration
 }
 
-var DecayBloomConfig = DecayBloom{
+var HyperBloomConfig = HyperBloom{
 	FalsePositive: 0.01,
 	Cardinality:   10000,
 	Decay:         time.Second * 60,

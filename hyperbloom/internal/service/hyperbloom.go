@@ -5,16 +5,16 @@ import (
 	"github.com/nnurry/gopds/hyperbloom/pkg/models"
 )
 
-var dbs = models.NewDecayBlooms()
+var dbs = models.NewHyperBlooms()
 
 // Get each bloom stored in memory
-func BloomList() []*models.DecayBloom {
-	return dbs.GetBlooms()
+func BloomList() []*models.HyperBloom {
+	return dbs.GetHyperBlooms()
 }
 
 // Get each bloom stored in memory
-func BloomGet(key string) *models.DecayBloom {
-	db, ok := dbs.GetBloom(key)
+func BloomGet(key string) *models.HyperBloom {
+	db, ok := dbs.GetHyperBloom(key)
 	if ok {
 		return db
 	}
@@ -26,10 +26,10 @@ func BloomGet(key string) *models.DecayBloom {
 // Not exist -> create a new one
 func BloomHash(key, value string) {
 	var err error
-	var db *models.DecayBloom
+	var db *models.HyperBloom
 
 	// Check in memory
-	db, ok := dbs.GetBloom(key)
+	db, ok := dbs.GetHyperBloom(key)
 	if !ok {
 		// Can't find in memory
 		// Fetch from database
@@ -38,7 +38,7 @@ func BloomHash(key, value string) {
 
 	if err != nil {
 		// Can't find in database
-		// Create new DecayBloom
+		// Create new HyperBloom
 		db = BloomCreate(key)
 	}
 	// Hash the value
@@ -47,16 +47,18 @@ func BloomHash(key, value string) {
 	// Add into memory
 	dbs.Set(db, key)
 
-	// Update database
+	// Update database (haven't decoupled updating from hashing)
 	BloomUpdate(db)
 }
 
-// Sync data in memory with database (prototype)
-func BloomUpdate(db *models.DecayBloom) {
-	query := "UPDATE bloom_filters SET bloombyte = $2 WHERE key = $1;"
+// Sync data in memory with database.
+// Will implement queue to periodically update database
+func BloomUpdate(db *models.HyperBloom) {
+	query := "UPDATE bloom_filters SET bloombyte = $2, hyperbyte = $3 WHERE key = $1;"
 	tx, _ := postgres.DbClient.Begin()
-	byterepr, _ := db.Bloom().GobEncode()
-	postgres.DbClient.Exec(query, db.Key(), byterepr)
+	bloomByterepr, _ := db.Bloom().GobEncode()
+	hyperByterepr, _ := db.Hyper().MarshalBinary()
+	postgres.DbClient.Exec(query, db.Key(), bloomByterepr, hyperByterepr)
 	tx.Commit()
 }
 
@@ -69,14 +71,15 @@ func BloomDecay(key string) {
 }
 
 // Create new bloom filter in database and return that object
-func BloomCreate(key string) *models.DecayBloom {
-	db := models.NewDefaultDecayBloom(key)
-	query := "INSERT INTO bloom_filters (key, bloombyte) VALUES ($1, $2)"
-	// NOTE: Haven't handled the error for serializing BloomFilter object
-	byterepr, _ := db.Bloom().GobEncode()
+func BloomCreate(key string) *models.HyperBloom {
+	db := models.NewDefaultHyperBloom(key)
+	query := "INSERT INTO bloom_filters (key, bloombyte, hyperbyte) VALUES ($1, $2, $3)"
+	// NOTE: Haven't handled the error for serializing HyperBloom object
+	bloomByterepr, _ := db.Bloom().GobEncode()
+	hyperByterepr, _ := db.Hyper().MarshalBinary()
 	// NOTE: Haven't handled the error for inserting into bloom_filters
 	tx, _ := postgres.DbClient.Begin()
-	postgres.DbClient.Exec(query, key, byterepr)
+	postgres.DbClient.Exec(query, key, bloomByterepr, hyperByterepr)
 	tx.Commit()
 	return db
 }

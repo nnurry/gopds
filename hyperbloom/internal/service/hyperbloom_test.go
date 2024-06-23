@@ -11,7 +11,7 @@ import (
 
 func TestCreateBloom(t *testing.T) {
 	var err error
-	createQuery := "CREATE TABLE IF NOT EXISTS bloom_filters (key VARCHAR, bloombyte BYTEA)"
+	createQuery := "CREATE TABLE IF NOT EXISTS bloom_filters (key VARCHAR, bloombyte BYTEA, hyperbyte BYTEA)"
 	_, err = postgres.DbClient.Exec(createQuery)
 	if err != nil {
 		log.Fatal("Can't create table bloom_filters", err)
@@ -26,7 +26,7 @@ func TestCreateBloom(t *testing.T) {
 	for key := range ids {
 		for _, id := range ids[key] {
 			service.BloomHash(key, id)
-			outStr := fmt.Sprintf("New appr. size (%s) = %d", key, service.BloomGet(key).ApproximatedSize())
+			outStr := fmt.Sprintf("New appr. size (%s) = %d", key, service.BloomGet(key).BloomCardinality())
 			fmt.Println(outStr)
 		}
 	}
@@ -42,6 +42,8 @@ func TestCreateBloom(t *testing.T) {
 		for _, id := range mergedIds {
 			fmt.Printf("(%s) ⪽ (%s) = %t\n", id, key, b.CheckExists(id))
 		}
+		fmt.Println("Bloom card:", b.BloomCardinality())
+		fmt.Println("Hyper card:", b.HyperCardinality())
 	}
 
 	fmt.Println("Num of keys after hashing:", len(service.BloomList()))
