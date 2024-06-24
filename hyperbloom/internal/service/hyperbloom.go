@@ -7,38 +7,30 @@ import (
 
 var dbs = models.NewHyperBlooms()
 
-// Get each bloom stored in memory
+// BloomList retrieves all HyperBloom instances stored in memory
 func BloomList() []*models.HyperBloom {
 	return dbs.GetHyperBlooms()
 }
 
-// Get each bloom stored in memory
+// BloomGet retrieves a HyperBloom instance by key, fetching from the database if not found in memory
 func BloomGet(key string) *models.HyperBloom {
-	db, ok := dbs.GetHyperBloom(key)
-	if ok {
-		return db
+	db, err := dbs.GetOrFetchHyperBloom(key)
+	if err != nil {
+		return nil
 	}
-	return nil
+	return db
 }
 
-// Check in memory for the bloom filter
-// Not exist -> check in database
-// Not exist -> create a new one
+// BloomHash adds a value to the Bloom filter and HyperLogLog sketch of the HyperBloom identified by key.
+// If the HyperBloom does not exist, it creates a new one.
 func BloomHash(key, value string) {
 	var err error
 	var db *models.HyperBloom
 
-	// Check in memory
-	db, ok := dbs.GetHyperBloom(key)
-	if !ok {
-		// Can't find in memory
-		// Fetch from database
-		db, err = models.GetBloomFromDB(key)
-	}
+	db, err = dbs.GetOrFetchHyperBloom(key)
 
 	if err != nil {
-		// Can't find in database
-		// Create new HyperBloom
+		// Can't find in both memory and database, create a new HyperBloom
 		db = BloomCreate(key)
 	}
 	// Hash the value
@@ -51,8 +43,7 @@ func BloomHash(key, value string) {
 	BloomUpdate(db)
 }
 
-// Sync data in memory with database.
-// Will implement queue to periodically update database
+// BloomUpdate synchronizes the HyperBloom instance in memory with the database.
 func BloomUpdate(db *models.HyperBloom) {
 	query := "UPDATE bloom_filters SET bloombyte = $2, hyperbyte = $3 WHERE key = $1;"
 	tx, _ := postgres.DbClient.Begin()
@@ -62,15 +53,29 @@ func BloomUpdate(db *models.HyperBloom) {
 	tx.Commit()
 }
 
-// If time.Now() - time.LastUpdate() >= decayDuration
-// Remove it from memory
+// BloomDecay removes a HyperBloom instance from memory if it has decayed (i.e., last used timestamp exceeds decay duration).
 func BloomDecay(key string) {
 	if dbs.CheckDecayed(key) {
 		dbs.Remove(key)
 	}
 }
 
-// Create new bloom filter in database and return that object
+// BloomExists checks if a value exists in the Bloom filter of the HyperBloom identified by key.
+func BloomExists(key, value string) bool {
+	db := BloomGet(key)
+	return db.CheckExists(value)
+}
+
+// BloomCardinality returns the cardinality of the Bloom filter and HyperLogLog sketch of the HyperBloom identified by key.
+func BloomCardinality(key string) (uint32, uint64) {
+	db, _ := dbs.GetHyperBloom(key)
+	bCard := db.BloomCardinality()
+	hCard := db.HyperCardinality()
+
+	return bCard, hCard
+}
+
+// BloomCreate creates a new HyperBloom instance and stores it in the database.
 func BloomCreate(key string) *models.HyperBloom {
 	db := models.NewDefaultHyperBloom(key)
 	query := "INSERT INTO bloom_filters (key, bloombyte, hyperbyte) VALUES ($1, $2, $3)"
