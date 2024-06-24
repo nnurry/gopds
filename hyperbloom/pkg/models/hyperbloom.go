@@ -77,6 +77,28 @@ func (dbs *HyperBlooms) GetHyperBlooms() []*HyperBloom {
 	return output
 }
 
+func (dbs *HyperBlooms) GetHyperBloomKeys() []string {
+	// Initialize an empty slice to store output
+	output := []string{}
+
+	// Iterate over each key in the 'blooms' map
+	for key := range dbs.blooms {
+		// Attempt to fetch the hyperbloom for the current 'key'
+		db, err := dbs.GetOrFetchHyperBloom(key)
+
+		// If fetching the hyperbloom was successful (no error)
+		if err == nil {
+			// Set the fetched hyperbloom in the 'blooms' map
+			dbs.Set(db, key)
+			// Append the key of the fetched hyperbloom to the output slice
+			output = append(output, db.Key())
+		}
+	}
+
+	// Return the slice containing keys of successfully fetched hyperblooms
+	return output
+}
+
 // GetOrFetchHyperBloom retrieves a HyperBloom instance from the collection or fetches it from the database
 func (dbs *HyperBlooms) GetOrFetchHyperBloom(key string) (*HyperBloom, error) {
 	var db *HyperBloom
@@ -90,6 +112,7 @@ func (dbs *HyperBlooms) GetOrFetchHyperBloom(key string) (*HyperBloom, error) {
 	if err != nil {
 		return nil, err
 	}
+	dbs.Set(db, key)
 	return db, nil
 }
 
@@ -148,13 +171,25 @@ func (dbs *HyperBlooms) Remove(key string) {
 
 // Set adds a HyperBloom instance to the HyperBlooms collection
 func (dbs *HyperBlooms) Set(db *HyperBloom, key string) {
+	// Refresh the last used timestamp of the HyperBloom instance
+	db.Refresh()
+
+	// Add the HyperBloom instance to the 'blooms' map in HyperBlooms
 	dbs.blooms[key] = db
 }
 
 // Hash adds a value to both the Bloom filter and HyperLogLog sketch of a HyperBloom instance
 func (db *HyperBloom) Hash(value string) {
+	// Add the value to the Bloom filter of the HyperBloom instance
 	db.bloom = db.bloom.AddString(value)
+
+	// Insert the value into the HyperLogLog sketch of the HyperBloom instance
 	db.hyper.Insert([]byte(value))
+}
+
+func (db *HyperBloom) Refresh() {
+	// Update the lastUsed timestamp of the HyperBloom instance to the current time
+	db.lastUsed = time.Now()
 }
 
 // MORE LOGICS

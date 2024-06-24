@@ -80,6 +80,29 @@ func bloomExists(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(output))
 }
 
+// bloomCard handles GET requests to compute approximate cardinality of the key.
+// It expects query parameter "key" of type string.
+func bloomCard(w http.ResponseWriter, r *http.Request) {
+	// Log the request details (HTTP method, URL path, and Content-Type header)
+	fmt.Println("[GET]", r.URL.Path, r.Header["Content-Type"])
+
+	// Parse query parameters from the request URL
+	queries := r.URL.Query()
+	key := queries.Get("key")
+
+	// Check if the 'key' query parameter is present and not empty
+	if key != "" {
+		// Call service to get the cardinality of the Bloom filter and HyperLogLog for the given key
+		bCard, hCard := service.BloomCardinality(key)
+
+		// Format the output string with the cardinality values
+		output := fmt.Sprintf("Cardinality (bloom, hyperloglog) = (%d, %d)", bCard, hCard)
+
+		// Write the formatted output string to the HTTP response
+		w.Write([]byte(output))
+	}
+}
+
 // main sets up the HTTP server and routes
 func main() {
 	var err error
@@ -87,10 +110,20 @@ func main() {
 	// Create a new ServeMux
 	mux := http.NewServeMux()
 
+	// Defer a function call to stop the asynchronous Bloom filter updates when main exits
+	defer func() {
+		service.StopAsyncBloomUpdate <- true // Send signal to stop async update
+	}()
+
 	// Register the bloomHash handler for the /hyperbloom/hash endpoint
 	mux.HandleFunc("/hyperbloom/hash", bloomHash)
+
 	// Register the bloomExists handler for the /hyperbloom/exists endpoint
 	mux.HandleFunc("/hyperbloom/exists", bloomExists)
+
+	// Register the bloomCard handler for the /hyperbloom/card endpoint
+	mux.HandleFunc("/hyperbloom/card", bloomCard)
+
 	// Register a default handler that prints the requested URL path
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(r.URL.Path)

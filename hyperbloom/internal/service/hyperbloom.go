@@ -1,23 +1,83 @@
 package service
 
 import (
+	"database/sql"
+	"fmt"
+	"sync"
+	"time"
+
 	"github.com/nnurry/gopds/hyperbloom/internal/database/postgres"
 	"github.com/nnurry/gopds/hyperbloom/pkg/models"
 )
 
 var dbs = models.NewHyperBlooms()
+var StopAsyncBloomUpdate = make(chan bool)
+
+// AsyncBloomUpdate starts a goroutine that periodically updates all HyperBloom instances in memory
+// at the specified interval (in milliseconds). The updates are performed asynchronously.
+func AsyncBloomUpdate(ticker *time.Ticker, done chan bool) {
+	fmt.Println("AsyncBloomUpdate")
+	mutex := &sync.Mutex{}
+
+	// Initialize a new read-write mutex for thread-safe operations
+
+	// Start a new goroutine to handle the periodic updates
+	go func() {
+		for {
+			// Loop indefinitely, executing at each tick of the ticker or done signal
+			select {
+
+			case <-done:
+				return // Exit the goroutine when done signal is received
+
+			case <-ticker.C:
+				// Execute when the ticker ticks
+
+				fmt.Println("Current keys", dbs.GetHyperBloomKeys())
+
+				// Lock the mutex for writing to ensure exclusive access to the dbs resource
+				mutex.Lock()
+				fmt.Println("Acquire lock")
+
+				tx, _ := postgres.DbClient.Begin()
+
+				// Iterate over all HyperBloom instances and update each one
+				for _, db := range dbs.GetHyperBlooms() {
+					fmt.Println("Update", db.Key())
+					BloomUpdate(db, false)
+				}
+
+				tx.Commit()
+
+				// Unlock the mutex after updates are done
+				mutex.Unlock()
+				fmt.Println("Release lock")
+			}
+		}
+	}()
+}
 
 // BloomList retrieves all HyperBloom instances stored in memory
 func BloomList() []*models.HyperBloom {
 	return dbs.GetHyperBlooms()
 }
 
-// BloomGet retrieves a HyperBloom instance by key, fetching from the database if not found in memory
+// BloomGet retrieves a HyperBloom instance by key.
+// It first attempts to get the HyperBloom from memory,
+// and if not found, it fetches it from the database.
 func BloomGet(key string) *models.HyperBloom {
+	// Attempt to get the HyperBloom from memory or fetch it from the database
 	db, err := dbs.GetOrFetchHyperBloom(key)
+
+	// If an error occurred (e.g., the HyperBloom couldn't be fetched from the database), return nil
 	if err != nil {
 		return nil
 	}
+
+	// Refresh the HyperBloom instance to update its last used timestamp or any other necessary fields
+	db.Refresh()
+
+	// Return the retrieved HyperBloom instance
 	return db
 }
 
@@ -39,18 +99,36 @@ func BloomHash(key, value string) {
 	// Add into memory
 	dbs.Set(db, key)
 
-	// Update database (haven't decoupled updating from hashing)
-	BloomUpdate(db)
 }
 
 // BloomUpdate synchronizes the HyperBloom instance in memory with the database.
-func BloomUpdate(db *models.HyperBloom) {
-	query := "UPDATE bloom_filters SET bloombyte = $2, hyperbyte = $3 WHERE key = $1;"
-	tx, _ := postgres.DbClient.Begin()
-	bloomByterepr, _ := db.Bloom().GobEncode()
-	hyperByterepr, _ := db.Hyper().MarshalBinary()
+func BloomUpdate(db *models.HyperBloom, doCommit bool) {
+	// Define the SQL query to insert or update the bloom_filters table
+	query := `
+		INSERT INTO bloom_filters (key, bloombyte, hyperbyte)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (key) DO UPDATE
+		SET bloombyte = EXCLUDED.bloombyte,
+			hyperbyte = EXCLUDED.hyperbyte;
+	`
+
+	// Initialize a transaction if doCommit is true
+	var tx *sql.Tx
+	if doCommit {
+		tx, _ = postgres.DbClient.Begin() // Begin a transaction
+	}
+
+	// Encode the Bloom filter and HyperLogLog data into byte representations
+	bloomByterepr, _ := db.Bloom().GobEncode()     // Encode Bloom filter data
+	hyperByterepr, _ := db.Hyper().MarshalBinary() // Marshal HyperLogLog data
+
+	// Execute the SQL query to insert or update the record
 	postgres.DbClient.Exec(query, db.Key(), bloomByterepr, hyperByterepr)
-	tx.Commit()
+
+	// Commit the transaction if doCommit is true
+	if doCommit {
+		tx.Commit() // Commit the transaction
+	}
 }
 
 // BloomDecay removes a HyperBloom instance from memory if it has decayed (i.e., last used timestamp exceeds decay duration).
@@ -63,16 +141,22 @@ func BloomDecay(key string) {
 // BloomExists checks if a value exists in the Bloom filter of the HyperBloom identified by key.
 func BloomExists(key, value string) bool {
 	db := BloomGet(key)
-	return db.CheckExists(value)
+	if db != nil {
+		return db.CheckExists(value)
+	}
+	return false
 }
 
 // BloomCardinality returns the cardinality of the Bloom filter and HyperLogLog sketch of the HyperBloom identified by key.
 func BloomCardinality(key string) (uint32, uint64) {
-	db, _ := dbs.GetHyperBloom(key)
-	bCard := db.BloomCardinality()
-	hCard := db.HyperCardinality()
+	db := BloomGet(key)
+	if db != nil {
+		bCard := db.BloomCardinality()
+		hCard := db.HyperCardinality()
 
-	return bCard, hCard
+		return bCard, hCard
+	}
+	return 0, 0
 }
 
 // BloomCreate creates a new HyperBloom instance and stores it in the database.
