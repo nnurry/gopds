@@ -103,6 +103,37 @@ func bloomCard(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func bloomSim(w http.ResponseWriter, r *http.Request) {
+	// Log the request details (HTTP method, URL path, and Content-Type header)
+	fmt.Println("[POST]", r.URL.Path, r.Header["Content-Type"])
+
+	// Read the request body
+	bytebody, _ := io.ReadAll(r.Body)
+	defer r.Body.Close()
+
+	// Struct to unmarshal the JSON body
+	jsonbody := &struct {
+		Key1 string `json:"key_1"`
+		Key2 string `json:"key_2"`
+	}{}
+
+	// Unmarshal the JSON body into the struct
+	if err := json.Unmarshal(bytebody, &jsonbody); err != nil {
+		http.Error(w, "Invalid JSON body", http.StatusBadRequest)
+		log.Println("Error decoding JSON body:", err)
+		return
+	}
+
+	// Calculate Bloom filter similarity using service function
+	sim := service.BloomSimilarity(jsonbody.Key1, jsonbody.Key2)
+
+	// Format the output string with the calculated similarity
+	output := fmt.Sprintf("Jaccard similarity = %f", sim)
+
+	// Write the formatted output string to the HTTP response
+	w.Write([]byte(output))
+}
+
 // main sets up the HTTP server and routes
 func main() {
 	var err error
@@ -123,6 +154,9 @@ func main() {
 
 	// Register the bloomCard handler for the /hyperbloom/card endpoint
 	mux.HandleFunc("/hyperbloom/card", bloomCard)
+
+	// Register the bloomCard handler for the /hyperbloom/card endpoint
+	mux.HandleFunc("/hyperbloom/sim", bloomSim)
 
 	// Register a default handler that prints the requested URL path
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

@@ -159,6 +159,27 @@ func BloomCardinality(key string) (uint32, uint64) {
 	return 0, 0
 }
 
+// BloomSimilarity calculates the Jaccard similarity between two Bloom filters identified by key1 and key2.
+// It returns a float32 value representing the similarity score.
+func BloomSimilarity(key1, key2 string) float32 {
+	// Retrieve Bloom filter for key1
+	db1 := BloomGet(key1)
+	// If Bloom filter for key1 is not found, return similarity score of 0.0
+	if db1 == nil {
+		return 0.0
+	}
+
+	// Retrieve Bloom filter for key2
+	db2 := BloomGet(key2)
+	// If Bloom filter for key2 is not found, return similarity score of 0.0
+	if db2 == nil {
+		return 0.0
+	}
+
+	// Calculate Jaccard similarity between db1 and db2 using models.JaccardSimBF function
+	return models.JaccardSimBF(db1, db2)
+}
+
 // BloomCreate creates a new HyperBloom instance and stores it in the database.
 func BloomCreate(key string) *models.HyperBloom {
 	db := models.NewDefaultHyperBloom(key)
