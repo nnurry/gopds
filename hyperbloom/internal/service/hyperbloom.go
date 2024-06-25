@@ -159,27 +159,27 @@ func BloomExists(key, value string) bool {
 
 // AllBoolList checks if all elements in boolList are equal.
 func AllBoolList(boolList []bool) bool {
-	// Iterate through the boolList starting from the second element
-	for i := 1; i < len(boolList); i++ {
-		// If any element is different from the first element, return false
-		if boolList[i] != boolList[0] {
+	// Iterate through the boolList slice
+	for i := 0; i < len(boolList); i++ {
+		// If any element is false, return false immediately
+		if !boolList[i] {
 			return false
 		}
 	}
-	// If all elements are equal, return true
+	// If all elements are true, return true
 	return true
 }
 
-// AnyBoolList checks if any element in boolList is equal to the first element.
+// AnyBoolList checks if any element in boolList is equal to true.
 func AnyBoolList(boolList []bool) bool {
-	// Iterate through the boolList starting from the second element
-	for i := 1; i < len(boolList); i++ {
-		// If any element is equal to the first element, return true
-		if boolList[i] == boolList[0] {
+	// Iterate through the boolList slice
+	for i := 0; i < len(boolList); i++ {
+		// If any element is true, return true immediately
+		if boolList[i] {
 			return true
 		}
 	}
-	// If no elements are equal to the first element, return false
+	// If no element is true, return false
 	return false
 }
 
