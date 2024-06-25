@@ -147,6 +147,51 @@ func BloomExists(key, value string) bool {
 	return false
 }
 
+// AllBoolList checks if all elements in boolList are equal.
+func AllBoolList(boolList []bool) bool {
+	// Iterate through the boolList starting from the second element
+	for i := 1; i < len(boolList); i++ {
+		// If any element is different from the first element, return false
+		if boolList[i] != boolList[0] {
+			return false
+		}
+	}
+	// If all elements are equal, return true
+	return true
+}
+
+// AnyBoolList checks if any element in boolList is equal to the first element.
+func AnyBoolList(boolList []bool) bool {
+	// Iterate through the boolList starting from the second element
+	for i := 1; i < len(boolList); i++ {
+		// If any element is equal to the first element, return true
+		if boolList[i] == boolList[0] {
+			return true
+		}
+	}
+	// If no elements are equal to the first element, return false
+	return false
+}
+
+// BloomChainingExists checks existence of a value in Bloom filters associated with given keys.
+func BloomChainingExists(keys []string, value string) []bool {
+	boolList := []bool{}
+	// Iterate through each key
+	for _, key := range keys {
+		// Retrieve Bloom filter for the key
+		db := BloomGet(key)
+		_bool := false
+		// If Bloom filter exists, check if value exists in it
+		if db != nil {
+			_bool = db.CheckExists(value)
+		}
+		// Append the result (true/false) to boolList
+		boolList = append(boolList, _bool)
+	}
+	// Return a list of boolean values indicating existence of the value in each Bloom filter
+	return boolList
+}
+
 // BloomCardinality returns the cardinality of the Bloom filter and HyperLogLog sketch of the HyperBloom identified by key.
 func BloomCardinality(key string) (uint32, uint64) {
 	db := BloomGet(key)

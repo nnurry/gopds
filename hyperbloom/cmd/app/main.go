@@ -134,6 +134,75 @@ func bloomSim(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(output))
 }
 
+func bloomBitwiseExists(w http.ResponseWriter, r *http.Request) {
+	// Log the request details (HTTP method, URL path, and Content-Type header)
+	fmt.Println("[POST]", r.URL.Path, r.Header["Content-Type"])
+
+	// Read the request body
+	bytebody, _ := io.ReadAll(r.Body)
+	defer r.Body.Close()
+
+	// Struct to unmarshal the JSON body
+	jsonbody := &struct {
+		Keys   []string `json:"keys"`
+		Value  string   `json:"value"`
+		Method string   `json:"method"`
+	}{}
+
+	// Unmarshal the JSON body into the struct
+	if err := json.Unmarshal(bytebody, &jsonbody); err != nil {
+		http.Error(w, "Invalid JSON body", http.StatusBadRequest)
+		log.Println("Error decoding JSON body:", err)
+		return
+	}
+
+	// TODO: Call service.BloomBitwiseExists and return output
+}
+
+func bloomChainingExists(w http.ResponseWriter, r *http.Request) {
+	// Log the request details (HTTP method, URL path, and Content-Type header)
+	fmt.Println("[POST]", r.URL.Path, r.Header["Content-Type"])
+
+	// Read the request body
+	bytebody, _ := io.ReadAll(r.Body)
+	defer r.Body.Close()
+
+	// Struct to unmarshal the JSON body
+	jsonbody := &struct {
+		Keys     []string `json:"keys"`
+		Value    string   `json:"value"`
+		Operator string   `json:"operator"`
+	}{}
+
+	// Unmarshal the JSON body into the struct
+	if err := json.Unmarshal(bytebody, &jsonbody); err != nil {
+		// If there's an error decoding JSON, respond with a Bad Request status
+		http.Error(w, "Invalid JSON body", http.StatusBadRequest)
+		log.Println("Error decoding JSON body:", err)
+		return
+	}
+
+	// Call service to check existence of value in Bloom filters associated with keys
+	boolList := service.BloomChainingExists(jsonbody.Keys, jsonbody.Value)
+
+	var bitResult bool
+	// Determine the result based on the specified operator
+	switch jsonbody.Operator {
+	case "AND":
+		bitResult = service.AllBoolList(boolList)
+	case "OR":
+		bitResult = service.AnyBoolList(boolList)
+	default:
+		bitResult = false
+	}
+
+	// Format the output string with the calculated result
+	output := fmt.Sprintf("%s chaining exists = %t", jsonbody.Operator, bitResult)
+
+	// Write the formatted output string to the HTTP response
+	w.Write([]byte(output))
+}
+
 // main sets up the HTTP server and routes
 func main() {
 	var err error
@@ -152,10 +221,16 @@ func main() {
 	// Register the bloomExists handler for the /hyperbloom/exists endpoint
 	mux.HandleFunc("/hyperbloom/exists", bloomExists)
 
+	// Register the bloomBitwiseExists handler for the /hyperbloom/exists/bitwise endpoint
+	mux.HandleFunc("/hyperbloom/exists/bitwise", bloomBitwiseExists)
+
+	// Register the bloomChainingExists handler for the /hyperbloom/exists/chaining endpoint
+	mux.HandleFunc("/hyperbloom/exists/chaining", bloomChainingExists)
+
 	// Register the bloomCard handler for the /hyperbloom/card endpoint
 	mux.HandleFunc("/hyperbloom/card", bloomCard)
 
-	// Register the bloomCard handler for the /hyperbloom/card endpoint
+	// Register the bloomSim handler for the /hyperbloom/sim endpoint
 	mux.HandleFunc("/hyperbloom/sim", bloomSim)
 
 	// Register a default handler that prints the requested URL path
