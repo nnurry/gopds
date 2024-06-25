@@ -144,9 +144,9 @@ func bloomBitwiseExists(w http.ResponseWriter, r *http.Request) {
 
 	// Struct to unmarshal the JSON body
 	jsonbody := &struct {
-		Keys   []string `json:"keys"`
-		Value  string   `json:"value"`
-		Method string   `json:"method"`
+		Keys     []string `json:"keys"`
+		Value    string   `json:"value"`
+		Operator string   `json:"operator"`
 	}{}
 
 	// Unmarshal the JSON body into the struct
@@ -156,7 +156,18 @@ func bloomBitwiseExists(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Call service.BloomBitwiseExists and return output
+	// Call service to determine bitwise existence
+	bitResult := service.BloomBitwiseExists(
+		jsonbody.Keys,
+		jsonbody.Value,
+		jsonbody.Operator,
+	)
+
+	// Prepare output based on bitwise result
+	output := fmt.Sprintf("%s bitwise exists = %t", jsonbody.Operator, bitResult)
+
+	// Write response to the client
+	w.Write([]byte(output))
 }
 
 func bloomChainingExists(w http.ResponseWriter, r *http.Request) {
@@ -183,18 +194,11 @@ func bloomChainingExists(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Call service to check existence of value in Bloom filters associated with keys
-	boolList := service.BloomChainingExists(jsonbody.Keys, jsonbody.Value)
-
-	var bitResult bool
-	// Determine the result based on the specified operator
-	switch jsonbody.Operator {
-	case "AND":
-		bitResult = service.AllBoolList(boolList)
-	case "OR":
-		bitResult = service.AnyBoolList(boolList)
-	default:
-		bitResult = false
-	}
+	bitResult := service.BloomChainingExists(
+		jsonbody.Keys,
+		jsonbody.Value,
+		jsonbody.Operator,
+	)
 
 	// Format the output string with the calculated result
 	output := fmt.Sprintf("%s chaining exists = %t", jsonbody.Operator, bitResult)

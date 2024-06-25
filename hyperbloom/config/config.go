@@ -2,6 +2,8 @@ package config
 
 import "time"
 
+// App specific config for Hyperbloom.
+// We control the cardinality, FP and other factors here
 type HyperBloom struct {
 	FalsePositive float64
 	Cardinality   uint

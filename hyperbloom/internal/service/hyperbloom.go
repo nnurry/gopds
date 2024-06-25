@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bits-and-blooms/bloom/v3"
 	"github.com/nnurry/gopds/hyperbloom/internal/database/postgres"
 	"github.com/nnurry/gopds/hyperbloom/pkg/models"
 )
@@ -174,22 +175,85 @@ func AnyBoolList(boolList []bool) bool {
 }
 
 // BloomChainingExists checks existence of a value in Bloom filters associated with given keys.
-func BloomChainingExists(keys []string, value string) []bool {
+func BloomChainingExists(keys []string, value string, operator string) bool {
+	// Initialize an empty boolean slice to store results for each key
 	boolList := []bool{}
+
 	// Iterate through each key
 	for _, key := range keys {
 		// Retrieve Bloom filter for the key
 		db := BloomGet(key)
 		_bool := false
-		// If Bloom filter exists, check if value exists in it
+
+		// If Bloom filter exists for the key, check if value exists in it
 		if db != nil {
 			_bool = db.CheckExists(value)
 		}
+
 		// Append the result (true/false) to boolList
 		boolList = append(boolList, _bool)
 	}
-	// Return a list of boolean values indicating existence of the value in each Bloom filter
-	return boolList
+
+	// Determine the final result based on the specified operator
+	if operator == "AND" {
+		// Return true if all elements in boolList are true
+		return AllBoolList(boolList)
+	} else if operator == "OR" {
+		// Return true if any element in boolList is true
+		return AnyBoolList(boolList)
+	} else {
+		// Default case: return false if operator is neither "AND" nor "OR"
+		return false
+	}
+}
+
+// BloomBitwiseExists checks the existence of a value in Bloom filters associated with given keys using bitwise operations.
+func BloomBitwiseExists(keys []string, value string, operator string) bool {
+	// Check if there are keys provided
+	if len(keys) < 1 {
+		return false
+	}
+
+	// Get the Bloom filter for the first key
+	db := BloomGet(keys[0])
+	if db == nil {
+		return false
+	}
+
+	// Get the BitSet of the Bloom filter for the first key
+	bs := db.Bloom().BitSet()
+
+	// Iterate through the rest of the keys
+	for i := 1; i < len(keys); i++ {
+		// Get the Bloom filter for the current key
+		db = BloomGet(keys[i])
+		switch operator {
+		case "AND":
+			// If the Bloom filter does not exist, return false for AND operation
+			if db == nil {
+				return false
+			}
+			// Perform bitwise AND operation with the BitSet of the current Bloom filter
+			bs = bs.Intersection(db.BitSet())
+		case "OR":
+			// If the Bloom filter does not exist, skip to the next key for OR operation
+			if db == nil {
+				continue
+			}
+			// Perform bitwise OR operation with the BitSet of the current Bloom filter
+			bs = bs.Union(db.BitSet())
+		}
+	}
+
+	// Create a new Bloom filter using the resulting BitSet
+	b := bloom.FromWithM(
+		bs.Bytes(),
+		db.Bloom().Cap(),
+		db.Bloom().K(),
+	)
+
+	// Test if the value exists in the new Bloom filter
+	return b.TestString(value)
 }
 
 // BloomCardinality returns the cardinality of the Bloom filter and HyperLogLog sketch of the HyperBloom identified by key.
