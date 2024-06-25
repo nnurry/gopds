@@ -24,13 +24,6 @@ type HyperBloom struct {
 	lastUsed time.Time
 }
 
-// PGBloom is a database model for storing Bloom filters and HyperLogLog sketches
-type PGBloom struct {
-	Key       string
-	Bloombyte []byte
-	Hyperbyte []byte
-}
-
 // NewHyperBlooms creates a new HyperBlooms instance
 func NewHyperBlooms() *HyperBlooms {
 	return &HyperBlooms{
@@ -271,29 +264,59 @@ func (db *HyperBloom) CheckDecayed(timemark time.Time) bool {
 // GetBloomFromDB fetches a HyperBloom instance from the database by key
 func GetBloomFromDB(key string) (*HyperBloom, error) {
 	var err error
-	record := &PGBloom{}
-	query := "SELECT key, bloombyte, hyperbyte FROM bloom_filters WHERE key = $1"
-	err = postgres.DbClient.QueryRow(query, key).Scan(&record.Key, &record.Bloombyte, &record.Hyperbyte)
+
+	// Define a structure to hold the database query result
+	record := &struct {
+		Key       string // Key of the HyperBloom instance
+		Bloombyte []byte // Serialized Bloom filter data
+		Hyperbyte []byte // Serialized HyperLogLog data
+		Decay     uint64 // Decay duration in seconds
+	}{}
+
+	// Query the database for the HyperBloom instance details
+	err = postgres.DbClient.QueryRow(
+		`SELECT 
+			hb.key,
+			decay_sec,
+			bloombyte, 
+			hyperbyte 
+		FROM hyperblooms hb
+		JOIN hyperbloom_metadata hb_meta
+		ON hb.key = hb_meta.key
+		WHERE hb.key = $1`, key).Scan(
+		&record.Key,
+		&record.Decay,
+		&record.Bloombyte,
+		&record.Hyperbyte,
+	)
+
+	// Handle any errors encountered during the database query
 	if err != nil {
 		return nil, err
 	}
 
+	// Create a new HyperBloom instance with retrieved data
 	db := &HyperBloom{
-		key:   key,
-		hyper: &hyperloglog.Sketch{},
-		bloom: &bloom.BloomFilter{},
+		key:      key,
+		hyper:    &hyperloglog.Sketch{},       // Initialize HyperLogLog sketch
+		bloom:    &bloom.BloomFilter{},        // Initialize Bloom filter
+		decay:    time.Duration(record.Decay), // Convert decay duration from seconds to time.Duration
+		lastUsed: time.Now().UTC(),            // Set current time as last used timestamp in UTC
 	}
 
+	// Unmarshal the retrieved HyperLogLog data into db.hyper
 	err = db.hyper.UnmarshalBinary(record.Hyperbyte)
 	if err != nil {
 		return nil, err
 	}
 
+	// Decode the retrieved Bloom filter data into db.bloom
 	err = db.bloom.GobDecode(record.Bloombyte)
 	if err != nil {
 		return nil, err
 	}
 
+	// Return the created HyperBloom instance
 	return db, nil
 }
 

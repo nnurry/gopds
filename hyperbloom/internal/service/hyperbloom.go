@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/bits-and-blooms/bloom/v3"
+	"github.com/nnurry/gopds/hyperbloom/config"
 	"github.com/nnurry/gopds/hyperbloom/internal/database/postgres"
 	"github.com/nnurry/gopds/hyperbloom/pkg/models"
 )
@@ -95,25 +96,31 @@ func BloomHash(key, value string) {
 	var err error
 	var db *models.HyperBloom
 
+	// Attempt to fetch or retrieve the HyperBloom for the given key
 	db, err = dbs.GetOrFetchHyperBloom(key)
 
+	// If there's an error (HyperBloom not found in memory or database)
 	if err != nil {
-		// Can't find in both memory and database, create a new HyperBloom
-		db = BloomCreate(key)
+		// Create a new HyperBloom instance using default configuration
+		db = BloomCreate(
+			config.HyperBloomConfig.Cardinality,
+			config.HyperBloomConfig.FalsePositive,
+			key,
+		)
 	}
-	// Hash the value
+
+	// Hash the value using Bloom filter and HyperLogLog
 	db.Hash(value)
 
-	// Add into memory
+	// Add the HyperBloom instance into memory (or update if already exists)
 	dbs.Set(db, key)
-
 }
 
 // BloomUpdate synchronizes the HyperBloom instance in memory with the database.
 func BloomUpdate(db *models.HyperBloom, doCommit bool) {
 	// Define the SQL query to insert or update the bloom_filters table
 	query := `
-		INSERT INTO bloom_filters (key, bloombyte, hyperbyte)
+		INSERT INTO hyperblooms (key, bloombyte, hyperbyte)
 		VALUES ($1, $2, $3)
 		ON CONFLICT (key) DO UPDATE
 		SET bloombyte = EXCLUDED.bloombyte,
@@ -298,16 +305,53 @@ func BloomSimilarity(key1, key2 string) float32 {
 	return models.JaccardSimBF(db1, db2)
 }
 
-// BloomCreate creates a new HyperBloom instance and stores it in the database.
-func BloomCreate(key string) *models.HyperBloom {
-	db := models.NewDefaultHyperBloom(key)
-	query := "INSERT INTO bloom_filters (key, bloombyte, hyperbyte) VALUES ($1, $2, $3)"
-	// NOTE: Haven't handled the error for serializing HyperBloom object
-	bloomByterepr, _ := db.Bloom().GobEncode()
-	hyperByterepr, _ := db.Hyper().MarshalBinary()
-	// NOTE: Haven't handled the error for inserting into bloom_filters
+// BloomCreate creates a new HyperBloom instance with specified parameters and stores it in the database.
+func BloomCreate(capacity uint, falsePositive float64, key string) *models.HyperBloom {
+	// Create a new HyperBloom instance using provided parameters
+	db := models.NewHyperBloomFromParams(capacity, falsePositive, key)
+
+	// Serialize the Bloom filter and HyperLogLog data structures to bytes
+	bloomByterepr, _ := db.Bloom().GobEncode()     // Serialize Bloom filter
+	hyperByterepr, _ := db.Hyper().MarshalBinary() // Serialize HyperLogLog
+
+	// Begin a database transaction
 	tx, _ := postgres.DbClient.Begin()
-	postgres.DbClient.Exec(query, key, bloomByterepr, hyperByterepr)
+
+	// Insert the serialized data into the hyperblooms table
+	postgres.DbClient.Exec(
+		`INSERT INTO hyperblooms (
+			key, 
+			bloombyte, 
+			hyperbyte
+		) 
+		VALUES ($1, $2, $3)`,
+		key,
+		bloomByterepr,
+		hyperByterepr,
+	)
+
+	// Insert metadata about the HyperBloom instance into the hyperbloom_metadata table
+	postgres.DbClient.Exec(
+		`INSERT INTO hyperbloom_metadata (
+			key, 
+			max_cardinality, 
+			false_positive, 
+			bit_capacity, 
+			no_hash_func, 
+			decay_sec
+		) 
+		VALUES ($1, $2, $3, $4, $5, $6)`,
+		key,
+		capacity,
+		falsePositive,
+		db.Bloom().Cap(),
+		db.Bloom().K(),
+		db.Decay(),
+	)
+
+	// Commit the database transaction
 	tx.Commit()
+
+	// Return the created HyperBloom instance
 	return db
 }
