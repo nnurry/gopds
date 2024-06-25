@@ -12,6 +12,6 @@ type HyperBloom struct {
 var HyperBloomConfig = HyperBloom{
 	FalsePositive: 0.01,
 	Cardinality:   10000,
-	Decay:         time.Second * 60,
-	UpdateRate:    time.Second * 15,
+	Decay:         time.Second * 300,
+	UpdateRate:    time.Second * 20,
 }
