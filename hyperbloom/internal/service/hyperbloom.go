@@ -17,42 +17,49 @@ var StopAsyncBloomUpdate = make(chan bool)
 // AsyncBloomUpdate starts a goroutine that periodically updates all HyperBloom instances in memory
 // at the specified interval (in milliseconds). The updates are performed asynchronously.
 func AsyncBloomUpdate(ticker *time.Ticker, done chan bool) {
-	fmt.Println("AsyncBloomUpdate")
-	mutex := &sync.Mutex{}
-
-	// Initialize a new read-write mutex for thread-safe operations
+	fmt.Println("AsyncBloomUpdate") // Print a message indicating the function has started
+	mutex := &sync.Mutex{}          // Initialize a new mutex for thread-safe operations
 
 	// Start a new goroutine to handle the periodic updates
 	go func() {
 		for {
 			// Loop indefinitely, executing at each tick of the ticker or done signal
 			select {
-
 			case <-done:
 				return // Exit the goroutine when done signal is received
 
 			case <-ticker.C:
 				// Execute when the ticker ticks
 
-				fmt.Println("Current keys", dbs.GetHyperBloomKeys())
+				keysToPrune := []string{} // Initialize an empty slice to store keys that need pruning
 
 				// Lock the mutex for writing to ensure exclusive access to the dbs resource
 				mutex.Lock()
-				fmt.Println("Acquire lock")
 
-				tx, _ := postgres.DbClient.Begin()
+				tx, _ := postgres.DbClient.Begin() // Begin a database transaction
 
 				// Iterate over all HyperBloom instances and update each one
-				for _, db := range dbs.GetHyperBlooms() {
-					fmt.Println("Update", db.Key())
-					BloomUpdate(db, false)
+				currentTime := time.Now().UTC() // Get the current time in UTC
+				for _, db := range dbs.GetInMemoryHyperBlooms() {
+					fmt.Println("Sync Hyperbloom object with database", db.Key()) // Print a synchronization message
+					BloomUpdate(db, false)                                        // Update the HyperBloom instance
+
+					// Check if the HyperBloom instance has decayed
+					if db.CheckDecayed(currentTime) {
+						keysToPrune = append(keysToPrune, db.Key()) // Add the key to prune list if decayed
+					}
 				}
 
-				tx.Commit()
+				tx.Commit() // Commit the database transaction
+
+				// Remove decayed HyperBloom instances from memory
+				for _, key := range keysToPrune {
+					fmt.Println("Decay", key, "from in-memory Hyperblooms") // Print a message for each decayed instance
+					dbs.Remove(key)                                         // Remove the decayed instance from memory
+				}
 
 				// Unlock the mutex after updates are done
 				mutex.Unlock()
-				fmt.Println("Release lock")
 			}
 		}
 	}()
@@ -134,7 +141,9 @@ func BloomUpdate(db *models.HyperBloom, doCommit bool) {
 
 // BloomDecay removes a HyperBloom instance from memory if it has decayed (i.e., last used timestamp exceeds decay duration).
 func BloomDecay(key string) {
-	if dbs.CheckDecayed(key) {
+	// Check if the HyperBloom instance with the given key has decayed based on the current UTC time
+	if dbs.CheckDecayed(key, time.Now().UTC()) {
+		// If decayed, remove the HyperBloom instance from memory
 		dbs.Remove(key)
 	}
 }
