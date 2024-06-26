@@ -6,7 +6,10 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 
+	"github.com/nnurry/gopds/hyperbloom/internal/database/postgres"
 	"github.com/nnurry/gopds/hyperbloom/internal/service"
 )
 
@@ -211,30 +214,32 @@ func bloomChainingExists(w http.ResponseWriter, r *http.Request) {
 func main() {
 	var err error
 
-	// Create a new ServeMux
+	// Create a new ServeMux instance to handle HTTP requests
 	mux := http.NewServeMux()
 
-	// Defer a function call to stop the asynchronous Bloom filter updates when main exits
-	defer func() {
-		service.StopAsyncBloomUpdate <- true // Send signal to stop async update
-	}()
+	// Set up a channel to receive OS interrupt signals
+	osChan := make(chan os.Signal, 1)
+	signal.Notify(osChan, os.Interrupt)
 
-	// Register the bloomHash handler for the /hyperbloom/hash endpoint
+	// Goroutine to handle OS interrupt signals
+	go func(osChan chan os.Signal) {
+		// Wait for an OS interrupt signal
+		sig := <-osChan
+		// Print the received signal
+		fmt.Println("Encountered signal:", sig.String())
+		// Perform shutdown tasks
+		fmt.Println("Shutting down hyperbloom update coroutine and closing DB conn")
+		service.StopAsyncBloomUpdate <- true // Send signal to stop async updates
+		postgres.DbClient.Close()            // Close the PostgreSQL database connection
+		os.Exit(1)                           // Exit the program with status code 1
+	}(osChan)
+
+	// Register various HTTP request handlers for specific endpoints
 	mux.HandleFunc("/hyperbloom/hash", bloomHash)
-
-	// Register the bloomExists handler for the /hyperbloom/exists endpoint
 	mux.HandleFunc("/hyperbloom/exists", bloomExists)
-
-	// Register the bloomBitwiseExists handler for the /hyperbloom/exists/bitwise endpoint
 	mux.HandleFunc("/hyperbloom/exists/bitwise", bloomBitwiseExists)
-
-	// Register the bloomChainingExists handler for the /hyperbloom/exists/chaining endpoint
 	mux.HandleFunc("/hyperbloom/exists/chaining", bloomChainingExists)
-
-	// Register the bloomCard handler for the /hyperbloom/card endpoint
 	mux.HandleFunc("/hyperbloom/card", bloomCard)
-
-	// Register the bloomSim handler for the /hyperbloom/sim endpoint
 	mux.HandleFunc("/hyperbloom/sim", bloomSim)
 
 	// Register a default handler that prints the requested URL path
