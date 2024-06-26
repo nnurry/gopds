@@ -6,16 +6,12 @@ import (
 	"sync"
 	"time"
 
-	"gopds/hyperbloom/config"
+	"gopds/hyperbloom/internal/config"
 	"gopds/hyperbloom/internal/database/postgres"
 	"gopds/hyperbloom/pkg/models"
 
 	"github.com/bits-and-blooms/bloom/v3"
 )
-
-var dbs = models.NewHyperBlooms()
-var StopAsyncBloomUpdate = make(chan bool, 1)
-var WG sync.WaitGroup
 
 // AsyncBloomUpdate starts a goroutine that periodically updates all HyperBloom instances in memory
 // at the specified interval (in milliseconds). The updates are performed asynchronously.
@@ -107,8 +103,8 @@ func BloomHash(key, value string) {
 	if err != nil {
 		// Create a new HyperBloom instance using default configuration
 		db = BloomCreate(
-			config.HyperBloomConfig.Cardinality,
-			config.HyperBloomConfig.FalsePositive,
+			config.HyperBloomCfg.Cardinality,
+			config.HyperBloomCfg.FalsePositive,
 			key,
 		)
 	}
@@ -334,9 +330,9 @@ func BloomCreate(capacity uint, falsePositive float64, key string) *models.Hyper
 		hyperByterepr,
 	)
 
-	// Insert metadata about the HyperBloom instance into the hyperbloom_metadata table
+	// Insert metadata about the HyperBloom instance into the hyperblooms_metadata table
 	postgres.DbClient.Exec(
-		`INSERT INTO hyperbloom_metadata (
+		`INSERT INTO hyperblooms_metadata (
 			key, 
 			max_cardinality, 
 			false_positive, 

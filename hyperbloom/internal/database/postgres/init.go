@@ -3,36 +3,38 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
+	"gopds/hyperbloom/internal/config"
 
-	//for connecting to db
+	// Importing "github.com/lib/pq" for PostgreSQL driver
 	_ "github.com/lib/pq"
 )
 
-const (
-	host     = "postgres" // replace to IP address, domain name depending on use case
-	port     = 5432
-	user     = "admin"    // replace with username
-	password = "123"      // replace with password
-	dbname   = "postgres" // replace with the database name
-)
+// DbClient is a global variable holding the connection pool to the PostgreSQL database.
+var DbClient *sql.DB
 
-var (
-	DbClient *sql.DB
-)
-
+// init initializes the PostgreSQL database connection upon package initialization.
 func init() {
-	connectionString := fmt.Sprintf("host=%s port=%d user=%s "+
-		"password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
+	// Load PostgreSQL configuration from environment or configuration files
+	config.LoadConfigPostgres()
+
+	// Retrieve the connection string from the loaded configuration
+	connStr := config.PostgresCfg.GetDataSourceName()
+
+	// Open a connection to the PostgreSQL database using the retrieved connection string
 	var err error
-	DbClient, err = sql.Open("postgres", connectionString)
+	DbClient, err = sql.Open("postgres", connStr)
 	if err != nil {
+		// Panic if there's an error establishing the database connection
 		panic(err)
 	}
 
+	// Ping the database to verify connectivity
 	err = DbClient.Ping()
 	if err != nil {
+		// Panic if there's an error pinging the database
 		panic(err)
 	}
-	fmt.Println("Successfully connected!")
+
+	// Print a success message to indicate a successful database connection
+	fmt.Println("Successfully connected to PostgreSQL!")
 }
