@@ -3,11 +3,12 @@ package models
 import (
 	"time"
 
+	"gopds/hyperbloom/config"
+	"gopds/hyperbloom/internal/database/postgres"
+
 	"github.com/axiomhq/hyperloglog"
 	"github.com/bits-and-blooms/bitset"
 	"github.com/bits-and-blooms/bloom/v3"
-	"github.com/nnurry/gopds/hyperbloom/config"
-	"github.com/nnurry/gopds/hyperbloom/internal/database/postgres"
 )
 
 // HyperBlooms manages multiple HyperBloom instances

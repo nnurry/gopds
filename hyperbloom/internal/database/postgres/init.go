@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	host     = "127.0.0.1" // replace to IP address, domain name depending on use case
+	host     = "postgres" // replace to IP address, domain name depending on use case
 	port     = 5432
 	user     = "admin"    // replace with username
 	password = "123"      // replace with password
@@ -26,6 +26,11 @@ func init() {
 		host, port, user, password, dbname)
 	var err error
 	DbClient, err = sql.Open("postgres", connectionString)
+	if err != nil {
+		panic(err)
+	}
+
+	err = DbClient.Ping()
 	if err != nil {
 		panic(err)
 	}

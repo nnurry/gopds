@@ -8,9 +8,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
+	"syscall"
 
-	"github.com/nnurry/gopds/hyperbloom/internal/database/postgres"
-	"github.com/nnurry/gopds/hyperbloom/internal/service"
+	"gopds/hyperbloom/internal/database/postgres"
+	"gopds/hyperbloom/internal/service"
 )
 
 // bloomHash handles POST requests for hashing a value and adding it to the Bloom filter.
@@ -210,7 +212,25 @@ func bloomChainingExists(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(output))
 }
 
-// main sets up the HTTP server and routes
+// cleanup handles OS interrupt signals to perform graceful shutdown tasks.
+// It waits for a signal on osChan, shuts down the hyperbloom update coroutine,
+// closes the PostgreSQL database connection, and then exits the program.
+func cleanup(osChan chan os.Signal, wg *sync.WaitGroup) {
+	defer wg.Done()
+	// Wait for an OS interrupt signal
+	sig := <-osChan
+	// Print the received signal
+	fmt.Println("Encountered signal:", sig.String())
+	// Perform shutdown tasks
+	fmt.Println("Shutting down hyperbloom update coroutine and closing DB conn")
+	close(service.StopAsyncBloomUpdate) // Send signal to stop async updates
+	postgres.DbClient.Close()           // Close the PostgreSQL database connection
+	close(osChan)
+	fmt.Println("Cleaned up, exiting the program")
+	os.Exit(0) // Exit the program with status code 0
+}
+
+// main sets up the HTTP server and routes, including handling OS interrupts for graceful shutdown.
 func main() {
 	var err error
 
@@ -219,20 +239,11 @@ func main() {
 
 	// Set up a channel to receive OS interrupt signals
 	osChan := make(chan os.Signal, 1)
-	signal.Notify(osChan, os.Interrupt)
+	signal.Notify(osChan, syscall.SIGTERM, syscall.SIGINT)
 
 	// Goroutine to handle OS interrupt signals
-	go func(osChan chan os.Signal) {
-		// Wait for an OS interrupt signal
-		sig := <-osChan
-		// Print the received signal
-		fmt.Println("Encountered signal:", sig.String())
-		// Perform shutdown tasks
-		fmt.Println("Shutting down hyperbloom update coroutine and closing DB conn")
-		service.StopAsyncBloomUpdate <- true // Send signal to stop async updates
-		postgres.DbClient.Close()            // Close the PostgreSQL database connection
-		os.Exit(1)                           // Exit the program with status code 1
-	}(osChan)
+	service.WG.Add(1)
+	go cleanup(osChan, &service.WG)
 
 	// Register various HTTP request handlers for specific endpoints
 	mux.HandleFunc("/hyperbloom/hash", bloomHash)
@@ -249,5 +260,10 @@ func main() {
 
 	// Start the HTTP server on port 5000
 	err = http.ListenAndServe(":5000", mux)
-	log.Fatal(err) // Log fatal error if the server fails to start
+	if err != nil {
+		log.Println("Can't start server:", err) // Log error if the server fails to start
+		osChan <- syscall.SIGTERM
+	}
+
+	service.WG.Wait()
 }

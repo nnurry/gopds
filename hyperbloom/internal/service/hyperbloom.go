@@ -6,27 +6,31 @@ import (
 	"sync"
 	"time"
 
+	"gopds/hyperbloom/config"
+	"gopds/hyperbloom/internal/database/postgres"
+	"gopds/hyperbloom/pkg/models"
+
 	"github.com/bits-and-blooms/bloom/v3"
-	"github.com/nnurry/gopds/hyperbloom/config"
-	"github.com/nnurry/gopds/hyperbloom/internal/database/postgres"
-	"github.com/nnurry/gopds/hyperbloom/pkg/models"
 )
 
 var dbs = models.NewHyperBlooms()
-var StopAsyncBloomUpdate = make(chan bool)
+var StopAsyncBloomUpdate = make(chan bool, 1)
+var WG sync.WaitGroup
 
 // AsyncBloomUpdate starts a goroutine that periodically updates all HyperBloom instances in memory
 // at the specified interval (in milliseconds). The updates are performed asynchronously.
 func AsyncBloomUpdate(ticker *time.Ticker, done chan bool) {
 	fmt.Println("AsyncBloomUpdate") // Print a message indicating the function has started
 	mutex := &sync.Mutex{}          // Initialize a new mutex for thread-safe operations
-
+	WG.Add(1)
 	// Start a new goroutine to handle the periodic updates
 	go func() {
+		defer WG.Done()
 		for {
 			// Loop indefinitely, executing at each tick of the ticker or done signal
 			select {
 			case <-done:
+				fmt.Println("Received signal to stop AsyncBloomUpdate")
 				return // Exit the goroutine when done signal is received
 
 			case <-ticker.C:

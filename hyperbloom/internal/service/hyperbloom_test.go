@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/nnurry/gopds/hyperbloom/internal/service"
+	"gopds/hyperbloom/internal/service"
 )
 
 func TestCreateBloom(t *testing.T) {

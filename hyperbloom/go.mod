@@ -1,6 +1,4 @@
-module github.com/nnurry/gopds
-
-go 1.22.3
+module gopds/hyperbloom
 
 require (
 	github.com/axiomhq/hyperloglog v0.0.0-20240507144631-af9851f82b27

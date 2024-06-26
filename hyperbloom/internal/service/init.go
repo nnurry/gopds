@@ -5,8 +5,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/nnurry/gopds/hyperbloom/config"
-	"github.com/nnurry/gopds/hyperbloom/internal/database/postgres"
+	"gopds/hyperbloom/config"
+	"gopds/hyperbloom/internal/database/postgres"
 )
 
 func init() {
@@ -27,8 +27,8 @@ func init() {
 
 	// Rollback transaction and log fatal error if table creation fails
 	if err != nil {
-		tx.Rollback()
 		log.Fatal("Can't create table hyperblooms", err)
+		tx.Rollback()
 	}
 
 	// Execute SQL query to create 'hyperbloom_metadata' table if it does not exist
@@ -45,8 +45,8 @@ func init() {
 
 	// Rollback transaction and log fatal error if table creation fails
 	if err != nil {
-		tx.Rollback()
 		log.Fatal("Can't create table hyperbloom_metadata", err)
+		tx.Rollback()
 	}
 
 	// Commit the transaction after successful table creations
