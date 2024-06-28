@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"gopds/probabilistics/internal/config"
+	"sync"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -11,7 +12,7 @@ import (
 var Client *redis.Client
 var Ctx = context.Background()
 
-func init() {
+var Initialize = sync.OnceFunc(func() {
 	var err error
 	config.LoadRedisConfig()
 	opts := &redis.Options{
@@ -25,4 +26,5 @@ func init() {
 	}
 
 	fmt.Println("Successfully connected to Redis!")
-}
+
+})

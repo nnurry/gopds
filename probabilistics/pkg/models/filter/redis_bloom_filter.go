@@ -42,6 +42,7 @@ func (hll *RedisBloomFilter) Cardinality() uint64 {
 func NewRedisBF(
 	maxCard uint, maxFp float64, expansionFactor uint,
 	nonScaling bool, bfKey string) *RedisBloomFilter {
+	myredis.Initialize()
 	hll := &RedisBloomFilter{}
 	hll.core = myredis.Client
 	hll.meta = meta.NewRedisBFMeta(maxCard, maxFp, expansionFactor, nonScaling, bfKey)

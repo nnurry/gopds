@@ -41,6 +41,7 @@ func (hll *RedisHyperLogLog) Cardinality() uint64 {
 
 func NewRedisHLL(pfKey string) *RedisHyperLogLog {
 	hll := &RedisHyperLogLog{}
+	myredis.Initialize()
 	hll.core = myredis.Client
 	hll.meta = meta.NewRedisHLLMeta("redis_hll", pfKey)
 	return hll

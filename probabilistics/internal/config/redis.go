@@ -10,7 +10,7 @@ type RedisConfig struct {
 	Addr string `env:"REDIS_ADDR" envDefault:"redis:6379"`
 }
 
-var redisCfg *RedisConfig
+var redisCfg = RedisConfig{}
 
 func LoadRedisConfig() {
 	if err := env.Parse(&redisCfg); err != nil {
@@ -19,5 +19,5 @@ func LoadRedisConfig() {
 }
 
 func RedisCfg() *RedisConfig {
-	return redisCfg
+	return &redisCfg
 }

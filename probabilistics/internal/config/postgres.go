@@ -15,7 +15,7 @@ type PostgresConfig struct {
 	SSLMode  string `env:"DB_SSL" envDefault:"disable"`
 }
 
-var postgresCfg *PostgresConfig
+var postgresCfg = PostgresConfig{}
 
 func LoadPostgresConfig() {
 	if err := env.Parse(&postgresCfg); err != nil {
@@ -24,7 +24,7 @@ func LoadPostgresConfig() {
 }
 
 func PostgresCfg() *PostgresConfig {
-	return postgresCfg
+	return &postgresCfg
 }
 
 func (cfg *PostgresConfig) GetDataSourceName() string {
