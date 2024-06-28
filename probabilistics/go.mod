@@ -6,6 +6,7 @@ require (
 	github.com/axiomhq/hyperloglog v0.0.0-20240507144631-af9851f82b27
 	github.com/bits-and-blooms/bloom/v3 v3.7.0
 	github.com/caarlos0/env/v11 v11.1.0
+	github.com/lib/pq v1.10.9
 	github.com/redis/go-redis/v9 v9.5.3
 )
 

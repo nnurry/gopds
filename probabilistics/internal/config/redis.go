@@ -7,7 +7,7 @@ import (
 )
 
 type RedisConfig struct {
-	Addr string `env:"REDIS_ADDR" envDefault:"redis:6379"`
+	Addr string `env:"REDIS_ADDR" envDefault:"127.0.0.1:6379"`
 }
 
 var redisCfg = RedisConfig{}

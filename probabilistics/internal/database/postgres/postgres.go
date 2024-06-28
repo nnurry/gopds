@@ -4,13 +4,11 @@ import (
 	"database/sql"
 	"fmt"
 	"gopds/probabilistics/internal/config"
-	"sync"
 )
 
 var Client *sql.DB
 
-var Initialize = sync.OnceFunc(func() {
-
+func init() {
 	var err error
 	config.LoadPostgresConfig()
 
@@ -26,4 +24,4 @@ var Initialize = sync.OnceFunc(func() {
 
 	fmt.Println("Successfully connected to PostgreSQL!")
 
-})
+}
