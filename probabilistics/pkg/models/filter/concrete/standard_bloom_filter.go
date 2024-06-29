@@ -46,9 +46,9 @@ func (f *StandardBloomFilter) Exists(value []byte) bool {
 	return f.core.Test(value)
 }
 
-func NewStandardBF(maxCard uint, maxFp float64) *StandardBloomFilter {
+func NewStandardBF(maxCard uint, maxFp float64, key string) *StandardBloomFilter {
 	f := &StandardBloomFilter{}
 	f.core = bloom.NewWithEstimates(uint(maxCard), maxFp)
-	f.meta = concretemeta.NewStandardBFMeta(maxCard, maxFp, "murmur128")
+	f.meta = concretemeta.NewStandardBFMeta(maxCard, maxFp, "murmur128", key)
 	return f
 }

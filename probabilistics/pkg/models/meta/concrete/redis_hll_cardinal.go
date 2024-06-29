@@ -3,7 +3,7 @@ package concretemeta
 type RedisHyperLogLogMeta struct {
 	id           uint
 	cardinalType string
-	pfKey        string
+	key          string
 }
 
 func (m *RedisHyperLogLogMeta) Id() uint {
@@ -18,13 +18,13 @@ func (m *RedisHyperLogLogMeta) CardinalType() string {
 	return m.cardinalType
 }
 
-func (m *RedisHyperLogLogMeta) PFKey() string {
-	return m.pfKey
+func (m *RedisHyperLogLogMeta) Key() string {
+	return m.key
 }
 
-func NewRedisHLLMeta(cardinalType string, pfKey string) *RedisHyperLogLogMeta {
+func NewRedisHLLMeta(cardinalType string, key string) *RedisHyperLogLogMeta {
 	return &RedisHyperLogLogMeta{
 		cardinalType: cardinalType,
-		pfKey:        pfKey,
+		key:          key,
 	}
 }

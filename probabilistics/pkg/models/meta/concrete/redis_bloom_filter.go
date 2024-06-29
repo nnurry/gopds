@@ -9,7 +9,7 @@ type RedisBloomFilterMeta struct {
 	maxFp           float64
 	hashFuncNum     uint
 	hashFuncType    string
-	bfKey           string
+	key             string
 	expansionFactor uint
 	nonScaling      bool
 }
@@ -42,8 +42,8 @@ func (m *RedisBloomFilterMeta) HashFuncType() string {
 	return m.hashFuncType
 }
 
-func (m *RedisBloomFilterMeta) BFKey() string {
-	return m.bfKey
+func (m *RedisBloomFilterMeta) Key() string {
+	return m.key
 }
 
 func (m *RedisBloomFilterMeta) ExpansionFactor() uint {
@@ -56,7 +56,7 @@ func (m *RedisBloomFilterMeta) NonScaling() bool {
 
 func NewRedisBFMeta(
 	maxCard uint, maxFp float64, expansionFactor uint,
-	nonScaling bool, bfKey string) *RedisBloomFilterMeta {
+	nonScaling bool, key string) *RedisBloomFilterMeta {
 	k := math.Ceil(-(math.Log(maxFp) / math.Log(2)))
 	return &RedisBloomFilterMeta{
 		filterType:      "redis_bloom",
@@ -64,7 +64,7 @@ func NewRedisBFMeta(
 		maxFp:           maxFp,
 		hashFuncNum:     uint(k),
 		hashFuncType:    "murmur64",
-		bfKey:           bfKey,
+		key:             key,
 		expansionFactor: expansionFactor,
 		nonScaling:      nonScaling,
 	}

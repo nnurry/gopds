@@ -46,7 +46,7 @@ func (hll *StandardHyperLogLog) Cardinality() uint64 {
 	return hll.core.Estimate()
 }
 
-func NewStandardHLL(sparse bool, precision uint8, pfKey string) *StandardHyperLogLog {
+func NewStandardHLL(sparse bool, precision uint8, key string) *StandardHyperLogLog {
 	hll := &StandardHyperLogLog{}
 	if precision == 14 && sparse {
 		hll.core = hyperloglog.New14()
@@ -58,6 +58,6 @@ func NewStandardHLL(sparse bool, precision uint8, pfKey string) *StandardHyperLo
 		hll.core = hyperloglog.New16NoSparse()
 	}
 
-	hll.meta = concretemeta.NewStandardHLLMeta("standard_hll", pfKey)
+	hll.meta = concretemeta.NewStandardHLLMeta("standard_hll", key)
 	return hll
 }

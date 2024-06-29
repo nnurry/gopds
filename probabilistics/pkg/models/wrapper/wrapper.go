@@ -5,19 +5,16 @@ import (
 	"fmt"
 	"gopds/probabilistics/internal/config"
 	"gopds/probabilistics/internal/database/postgres"
-	"gopds/probabilistics/internal/service"
-	"gopds/probabilistics/pkg/models/probabilistic"
+	"gopds/probabilistics/pkg/models/decayable"
 	"net/http"
 	"os"
 	"sync"
 	"time"
 )
 
-type WrapperKey service.ProbCreateBody
-
 type Wrapper struct {
-	probmap      map[WrapperKey]*probabilistic.Probabilistic
-	counter      uint
+	filters      *FilterWrapper
+	cardinals    *CardinalWrapper
 	syncInterval time.Duration
 }
 
@@ -28,26 +25,26 @@ var DecayDone chan bool
 
 func NewWrapper() *Wrapper {
 	return &Wrapper{
-		probmap:      make(map[WrapperKey]*probabilistic.Probabilistic),
-		counter:      0,
+		filters:      NewFilterWrapper(),
+		cardinals:    NewCardinalWrapper(),
 		syncInterval: config.ProbabilisticCfg.SyncInterval,
 	}
 }
 
-func (pw *Wrapper) Add(k WrapperKey, p *probabilistic.Probabilistic) {
-	_, exists := pw.probmap[k]
-	pw.probmap[k] = p
-	if !exists {
-		pw.counter++
-	}
+func (pw *Wrapper) AddFilter(k FilterKey, v *decayable.Filter) {
+	pw.filters.Add(k, v)
 }
 
-func (pw *Wrapper) Delete(k WrapperKey) {
-	_, exists := pw.probmap[k]
-	delete(pw.probmap, k)
-	if exists {
-		pw.counter--
-	}
+func (pw *Wrapper) AddCardinal(k CardinalKey, v *decayable.Cardinal) {
+	pw.cardinals.Add(k, v)
+}
+
+func (pw *Wrapper) DeleteFilter(k FilterKey) {
+	pw.filters.Delete(k)
+}
+
+func (pw *Wrapper) DeleteCardinal(k CardinalKey) {
+	pw.cardinals.Delete(k)
 }
 
 func GetWrapper() *Wrapper {
@@ -55,7 +52,8 @@ func GetWrapper() *Wrapper {
 }
 
 func Synchronize(ticker *time.Ticker, mainWg *sync.WaitGroup, mainDone chan bool) {
-	decayedProbKeys := []WrapperKey{}
+	decayedFilterKeys := []FilterKey{}
+	decayedCardinalKeys := []CardinalKey{}
 	mainWg.Add(1)
 	var mu sync.Mutex
 	go func() {
@@ -71,28 +69,50 @@ func Synchronize(ticker *time.Ticker, mainWg *sync.WaitGroup, mainDone chan bool
 				fmt.Println("Synchronize() cleanly stopped")
 				return
 			case <-ticker.C:
-				decayedProbKeys = []WrapperKey{}
+				decayedFilterKeys = []FilterKey{}
+				decayedCardinalKeys = []CardinalKey{}
 				startTime := time.Now().UTC()
 				mu.Lock()
+
 				tx, _ := postgres.Client.Begin()
-				for key, prob := range pw.probmap {
+				for key, filter := range pw.filters.Core() {
 					subWg.Add(1)
-					go func(k WrapperKey, p *probabilistic.Probabilistic) {
+					go func(k FilterKey, v *decayable.Filter) {
 						defer subWg.Done()
-						if p.Meta().IsDecayed(startTime) {
-							decayedProbKeys = append(decayedProbKeys, k)
+						if v.Meta().IsDecayed(startTime) {
+							decayedFilterKeys = append(decayedFilterKeys, k)
 						}
 						// Logic to synchronize with database here
-						service.SaveProbabilistic(p, false, false, tx)
-					}(key, prob)
+					}(key, filter)
+				}
+
+				for key, filter := range pw.cardinals.Core() {
+					subWg.Add(1)
+					go func(k CardinalKey, v *decayable.Cardinal) {
+						defer subWg.Done()
+						if v.Meta().IsDecayed(startTime) {
+							decayedCardinalKeys = append(decayedCardinalKeys, k)
+						}
+						// Logic to synchronize with database here
+					}(key, filter)
 				}
 				subWg.Wait()
-				if len(decayedProbKeys) > 0 {
-					for _, key := range decayedProbKeys {
-						fmt.Println("Decayed", key)
-						pw.Delete(key)
+				if len(decayedFilterKeys) > 0 {
+					for _, key := range decayedFilterKeys {
+						fmt.Println("Decayed filter:", key)
+						pw.DeleteFilter(key)
 					}
 				}
+
+				if len(decayedCardinalKeys) > 0 {
+					for _, key := range decayedCardinalKeys {
+						fmt.Println("Decayed cardinal:", key)
+						pw.DeleteCardinal(key)
+					}
+				}
+
+				tx.Commit()
+
 				mu.Unlock()
 			}
 		}

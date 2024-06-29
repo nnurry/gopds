@@ -6,6 +6,7 @@ import (
 
 type StandardBloomFilterMeta struct {
 	id           uint
+	key          string
 	filterType   string
 	maxCard      uint
 	maxFp        float64
@@ -41,10 +42,15 @@ func (m *StandardBloomFilterMeta) HashFuncType() string {
 	return m.hashFuncType
 }
 
+func (m *StandardBloomFilterMeta) Key() string {
+	return m.key
+}
+
 func NewStandardBFMeta(
-	maxCard uint, maxFp float64, hashFuncType string) *StandardBloomFilterMeta {
+	maxCard uint, maxFp float64, hashFuncType string, key string) *StandardBloomFilterMeta {
 	_, hashFuncNum := bloom.EstimateParameters(maxCard, maxFp)
 	return &StandardBloomFilterMeta{
+		key:          key,
 		filterType:   "standard_bloom",
 		maxCard:      maxCard,
 		maxFp:        maxFp,

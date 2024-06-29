@@ -5,11 +5,21 @@ import (
 	"net/http"
 )
 
+func SetupFilterRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("/filter/create", controllers.Filter.Create)
+	mux.HandleFunc("/filter/exists", controllers.Filter.Exists)
+	mux.HandleFunc("/filter/add", controllers.Filter.Add)
+}
+
+func SetupCardinalRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("/cardinal/create", controllers.Cardinal.Create)
+	mux.HandleFunc("/cardinal/card", controllers.Cardinal.Card)
+	mux.HandleFunc("/cardinal/add", controllers.Cardinal.Add)
+}
+
 func SetupMux() *http.ServeMux {
 	var mux = http.NewServeMux()
-	mux.HandleFunc("/probabilistic/create", controllers.Probabilistics.Create)
-	mux.HandleFunc("/probabilistic/exists", controllers.Probabilistics.Exists)
-	mux.HandleFunc("/probabilistic/add", controllers.Probabilistics.Add)
-	mux.HandleFunc("/probabilistic/card", controllers.Probabilistics.Card)
+	SetupFilterRoutes(mux)
+	SetupCardinalRoutes(mux)
 	return mux
 }

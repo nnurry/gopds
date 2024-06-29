@@ -57,13 +57,13 @@ func (hll *RedisHyperLogLog) Cardinality() uint64 {
 }
 
 func (f *RedisHyperLogLog) getKey() string {
-	return fmt.Sprintf("hll:key=%s", f.meta.PFKey())
+	return fmt.Sprintf("hll:key=%s", f.meta.Key())
 }
 
-func NewRedisHLL(pfKey string) *RedisHyperLogLog {
+func NewRedisHLL(key string) *RedisHyperLogLog {
 	hll := &RedisHyperLogLog{}
 	myredis.Initialize()
 	hll.core = myredis.Client
-	hll.meta = concretemeta.NewRedisHLLMeta("redis_hll", pfKey)
+	hll.meta = concretemeta.NewRedisHLLMeta("redis_hll", key)
 	return hll
 }

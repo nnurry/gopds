@@ -56,7 +56,7 @@ func (f *RedisBloomFilter) Exists(value []byte) bool {
 func (f *RedisBloomFilter) getKey() string {
 	return fmt.Sprintf(
 		"bloom:key=%s:capacity=%d:error_rate=%f:expansion=%d:scaling=%t",
-		f.meta.BFKey(),
+		f.meta.Key(),
 		f.meta.MaxCard(),
 		f.meta.MaxFp(),
 		f.meta.ExpansionFactor(),
@@ -66,11 +66,11 @@ func (f *RedisBloomFilter) getKey() string {
 
 func NewRedisBF(
 	maxCard uint, maxFp float64, expansionFactor uint,
-	nonScaling bool, fKey string) *RedisBloomFilter {
+	nonScaling bool, key string) *RedisBloomFilter {
 	myredis.Initialize()
 	f := &RedisBloomFilter{}
 	f.core = myredis.Client
-	f.meta = concretemeta.NewRedisBFMeta(maxCard, maxFp, expansionFactor, nonScaling, fKey)
+	f.meta = concretemeta.NewRedisBFMeta(maxCard, maxFp, expansionFactor, nonScaling, key)
 	err := f.core.BFReserveWithArgs(
 		myredis.Ctx,
 		f.getKey(),
