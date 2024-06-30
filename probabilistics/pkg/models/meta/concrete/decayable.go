@@ -29,7 +29,7 @@ func (m *DecayableMeta) IsDecayed(timemark time.Time) bool {
 	return m.lastUsed.Add(m.decay).Compare(timemark) == -1
 }
 
-func NewProbabilisticMeta(decay time.Duration) *DecayableMeta {
+func NewDecayableMeta(decay time.Duration) *DecayableMeta {
 	return &DecayableMeta{
 		decay:    decay,
 		lastUsed: time.Now().UTC(),

@@ -55,7 +55,7 @@ func setFilter(body *FilterCreateBody, pw *decayable.Filter) {
 }
 
 func setFilterMeta(pw *decayable.Filter) {
-	pw.SetMeta(concretemeta.NewProbabilisticMeta(
+	pw.SetMeta(concretemeta.NewDecayableMeta(
 		config.ProbabilisticCfg.DecayDuration,
 	))
 }
@@ -70,7 +70,12 @@ func CreateFilter(body *FilterCreateBody) *decayable.Filter {
 	return prob
 }
 
-func SaveFilter(pw *decayable.Filter, isCreate bool, doCommit bool, tx *sql.Tx) error {
+func SaveFilter(
+	pw *decayable.Filter,
+	isCreate bool,
+	doCommit bool,
+	refreshLastUsed bool,
+	tx *sql.Tx) error {
 	var err error
 	var filterId uint
 
@@ -135,7 +140,9 @@ func SaveFilter(pw *decayable.Filter, isCreate bool, doCommit bool, tx *sql.Tx) 
 		tx.Commit()
 	}
 
-	pw.Meta().ResetLastUsed()
+	if refreshLastUsed {
+		pw.Meta().ResetLastUsed()
+	}
 
 	return nil
 

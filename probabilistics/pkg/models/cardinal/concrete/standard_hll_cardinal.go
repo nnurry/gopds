@@ -1,6 +1,7 @@
 package concretecardinal
 
 import (
+	"errors"
 	abstractmeta "gopds/probabilistics/pkg/models/meta/abstract"
 	concretemeta "gopds/probabilistics/pkg/models/meta/concrete"
 
@@ -33,12 +34,18 @@ func (hll *StandardHyperLogLog) Meta() abstractmeta.CardinalMeta {
 }
 
 func (hll *StandardHyperLogLog) Add(value []byte) error {
-	hll.core.Insert(value)
+	ok := hll.core.Insert(value)
+	if !ok {
+		return errors.New("can't insert into HLL")
+	}
 	return nil
 }
 
 func (hll *StandardHyperLogLog) AddString(value string) error {
-	hll.core.Insert([]byte(value))
+	ok := hll.core.Insert([]byte(value))
+	if !ok {
+		return errors.New("can't insert into HLL")
+	}
 	return nil
 }
 

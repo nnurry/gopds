@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gopds/probabilistics/internal/config"
 	"gopds/probabilistics/internal/database/postgres"
+	"gopds/probabilistics/internal/service"
 	"gopds/probabilistics/pkg/models/decayable"
 	"net/http"
 	"os"
@@ -29,6 +30,14 @@ func NewWrapper() *Wrapper {
 		cardinals:    NewCardinalWrapper(),
 		syncInterval: config.ProbabilisticCfg.SyncInterval,
 	}
+}
+
+func (pw *Wrapper) FilterWrapper() *FilterWrapper {
+	return pw.filters
+}
+
+func (pw *Wrapper) CardinalWrapper() *CardinalWrapper {
+	return pw.cardinals
 }
 
 func (pw *Wrapper) AddFilter(k FilterKey, v *decayable.Filter) {
@@ -83,10 +92,13 @@ func Synchronize(ticker *time.Ticker, mainWg *sync.WaitGroup, mainDone chan bool
 							decayedFilterKeys = append(decayedFilterKeys, k)
 						}
 						// Logic to synchronize with database here
+						if err := service.SaveFilter(v, false, false, false, tx); err != nil {
+							fmt.Println("Got error while syncing filter", key, err)
+						}
 					}(key, filter)
 				}
 
-				for key, filter := range pw.cardinals.Core() {
+				for key, cardinal := range pw.cardinals.Core() {
 					subWg.Add(1)
 					go func(k CardinalKey, v *decayable.Cardinal) {
 						defer subWg.Done()
@@ -94,7 +106,10 @@ func Synchronize(ticker *time.Ticker, mainWg *sync.WaitGroup, mainDone chan bool
 							decayedCardinalKeys = append(decayedCardinalKeys, k)
 						}
 						// Logic to synchronize with database here
-					}(key, filter)
+						if err := service.SaveCardinal(v, false, false, false, tx); err != nil {
+							fmt.Println("Got error while syncing cardinal", key, err)
+						}
+					}(key, cardinal)
 				}
 				subWg.Wait()
 				if len(decayedFilterKeys) > 0 {

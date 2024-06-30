@@ -9,7 +9,7 @@ import (
 )
 
 func filterCreate(w http.ResponseWriter, r *http.Request) {
-	GetBasicInfo(r)
+	fmt.Println(GetBasicInfo(r))
 	var err error
 	body := &service.FilterCreateBody{}
 	loadJson(r.Body, body)
@@ -17,7 +17,7 @@ func filterCreate(w http.ResponseWriter, r *http.Request) {
 	tx, _ := postgres.Client.Begin()
 
 	pw := service.CreateFilter(body)
-	err = service.SaveFilter(pw, true, true, tx)
+	err = service.SaveFilter(pw, true, true, true, tx)
 
 	wrapperKey := &wrapper.FilterKey{
 		Type:           pw.Core().Meta().FilterType(),
@@ -36,11 +36,46 @@ func filterCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func filterExists(w http.ResponseWriter, r *http.Request) {
-	GetBasicInfo(r)
+	fmt.Println(GetBasicInfo(r))
+
+	body := &service.FilterExistsBody{}
+	loadJson(r.Body, body)
+
+	filterKey := wrapper.FilterKey{
+		Type:           body.Filter.Type,
+		Key:            body.Meta.Key,
+		MaxCardinality: body.Filter.MaxCardinality,
+		ErrorRate:      body.Filter.ErrorRate,
+	}
+
+	filter := wrapper.GetWrapper().FilterWrapper().GetFilter(filterKey, false)
+
+	var exists bool
+	if filter != nil {
+		exists = filter.Core().Exists([]byte(body.Meta.Value))
+	}
+
+	w.Write([]byte(body.Meta.Value + " exists in " + body.Meta.Key + ": " + fmt.Sprint(exists)))
 }
 
 func filterAdd(w http.ResponseWriter, r *http.Request) {
-	GetBasicInfo(r)
+	fmt.Println(GetBasicInfo(r))
+	body := &service.FilterAddBody{}
+	loadJson(r.Body, body)
+
+	filterKey := wrapper.FilterKey{
+		Type:           body.Filter.Type,
+		Key:            body.Meta.Key,
+		MaxCardinality: body.Filter.MaxCardinality,
+		ErrorRate:      body.Filter.ErrorRate,
+	}
+
+	filter := wrapper.GetWrapper().FilterWrapper().GetFilter(filterKey, false)
+	if filter != nil {
+		filter.Core().AddString(body.Meta.Value)
+	}
+
+	w.Write([]byte("Added " + body.Meta.Value + " into " + body.Meta.Key))
 }
 
 type AbstractFilter struct {

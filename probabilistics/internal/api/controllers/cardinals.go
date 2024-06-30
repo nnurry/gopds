@@ -9,7 +9,7 @@ import (
 )
 
 func cardinalCreate(w http.ResponseWriter, r *http.Request) {
-	GetBasicInfo(r)
+	fmt.Println(GetBasicInfo(r))
 	var err error
 	body := &service.CardinalCreateBody{}
 	loadJson(r.Body, body)
@@ -17,7 +17,7 @@ func cardinalCreate(w http.ResponseWriter, r *http.Request) {
 	tx, _ := postgres.Client.Begin()
 
 	pw := service.CreateCardinal(body)
-	err = service.SaveCardinal(pw, true, true, tx)
+	err = service.SaveCardinal(pw, true, true, true, tx)
 
 	wrapperKey := &wrapper.CardinalKey{
 		Type: pw.Core().Meta().CardinalType(),
@@ -34,11 +34,39 @@ func cardinalCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func cardinalAdd(w http.ResponseWriter, r *http.Request) {
-	GetBasicInfo(r)
+	fmt.Println(GetBasicInfo(r))
+	body := &service.CardinalAddBody{}
+	loadJson(r.Body, body)
+
+	cardinalKey := wrapper.CardinalKey{
+		Type: body.Cardinal.Type,
+		Key:  body.Meta.Key,
+	}
+
+	cardinal := wrapper.GetWrapper().CardinalWrapper().GetCardinal(cardinalKey, false)
+	if cardinal != nil {
+		cardinal.Core().AddString(body.Meta.Value)
+	}
+
+	w.Write([]byte("Added " + body.Meta.Value + " into " + body.Meta.Key))
 }
 
 func cardinalCard(w http.ResponseWriter, r *http.Request) {
-	GetBasicInfo(r)
+	fmt.Println(GetBasicInfo(r))
+	body := &service.CardinalCardBody{}
+	loadJson(r.Body, body)
+
+	cardinalKey := wrapper.CardinalKey{
+		Type: body.Cardinal.Type,
+		Key:  body.Meta.Key,
+	}
+
+	cardinal := wrapper.GetWrapper().CardinalWrapper().GetCardinal(cardinalKey, false)
+	var cardinality uint64
+	if cardinal != nil {
+		cardinality = cardinal.Core().Cardinality()
+	}
+	w.Write([]byte("Cardinality of " + body.Meta.Key + " = " + fmt.Sprint(cardinality)))
 }
 
 type AbstractCardinal struct {

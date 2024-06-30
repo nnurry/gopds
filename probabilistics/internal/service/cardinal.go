@@ -43,7 +43,7 @@ func setCardinal(body *CardinalCreateBody, pw *decayable.Cardinal) {
 }
 
 func setCardinalMeta(pw *decayable.Cardinal) {
-	pw.SetMeta(concretemeta.NewProbabilisticMeta(
+	pw.SetMeta(concretemeta.NewDecayableMeta(
 		config.ProbabilisticCfg.DecayDuration,
 	))
 }
@@ -58,7 +58,12 @@ func CreateCardinal(body *CardinalCreateBody) *decayable.Cardinal {
 	return prob
 }
 
-func SaveCardinal(pw *decayable.Cardinal, isCreate bool, doCommit bool, tx *sql.Tx) error {
+func SaveCardinal(
+	pw *decayable.Cardinal,
+	isCreate bool,
+	doCommit bool,
+	refreshLastUsed bool,
+	tx *sql.Tx) error {
 	var err error
 	var cardinalId uint
 
@@ -113,7 +118,9 @@ func SaveCardinal(pw *decayable.Cardinal, isCreate bool, doCommit bool, tx *sql.
 		tx.Commit()
 	}
 
-	pw.Meta().ResetLastUsed()
+	if refreshLastUsed {
+		pw.Meta().ResetLastUsed()
+	}
 
 	return nil
 

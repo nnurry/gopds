@@ -10,7 +10,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-var SigFlag = []byte("Redis deserialize flag")
+var SigFlag = []byte{}
 
 type RedisHyperLogLog struct {
 	core *redis.Client
