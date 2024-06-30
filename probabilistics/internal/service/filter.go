@@ -3,6 +3,7 @@ package service
 import (
 	"database/sql"
 	"errors"
+	request_schema "gopds/probabilistics/internal/api/schemas/request"
 	"gopds/probabilistics/internal/config"
 	"gopds/probabilistics/internal/database/postgres"
 	"gopds/probabilistics/pkg/models/decayable"
@@ -10,28 +11,7 @@ import (
 	concretemeta "gopds/probabilistics/pkg/models/meta/concrete"
 )
 
-type FilterBody struct {
-	Type           string  `json:"type"`
-	MaxCardinality uint    `json:"max_cardinality"`
-	ErrorRate      float64 `json:"error_rate"`
-}
-
-type FilterCreateBody struct {
-	Meta   MetaBody   `json:"meta"`
-	Filter FilterBody `json:"filter"`
-}
-
-type FilterExistsBody struct {
-	Meta   PairMetaBody `json:"meta"`
-	Filter FilterBody   `json:"filter"`
-}
-
-type FilterAddBody struct {
-	Meta   PairMetaBody `json:"meta"`
-	Filter FilterBody   `json:"filter"`
-}
-
-func setFilter(body *FilterCreateBody, pw *decayable.Filter) {
+func setFilter(body *request_schema.FilterCreateBody, pw *decayable.Filter) {
 	switch body.Filter.Type {
 	case "standard_bloom":
 		core := concretefilter.NewStandardBF(
@@ -60,7 +40,7 @@ func setFilterMeta(pw *decayable.Filter) {
 	))
 }
 
-func CreateFilter(body *FilterCreateBody) *decayable.Filter {
+func CreateFilter(body *request_schema.FilterCreateBody) *decayable.Filter {
 	// create filter
 	prob := &decayable.Filter{}
 	setFilter(body, prob)

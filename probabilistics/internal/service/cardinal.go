@@ -3,6 +3,7 @@ package service
 import (
 	"database/sql"
 	"errors"
+	request_schema "gopds/probabilistics/internal/api/schemas/request"
 	"gopds/probabilistics/internal/config"
 	"gopds/probabilistics/internal/database/postgres"
 	concretecardinal "gopds/probabilistics/pkg/models/cardinal/concrete"
@@ -10,26 +11,7 @@ import (
 	concretemeta "gopds/probabilistics/pkg/models/meta/concrete"
 )
 
-type CardinalBody struct {
-	Type string `json:"type"`
-}
-
-type CardinalCreateBody struct {
-	Meta     MetaBody     `json:"meta"`
-	Cardinal CardinalBody `json:"cardinal"`
-}
-
-type CardinalCardBody struct {
-	Meta     MetaBody     `json:"meta"`
-	Cardinal CardinalBody `json:"cardinal"`
-}
-
-type CardinalAddBody struct {
-	Meta     PairMetaBody `json:"meta"`
-	Cardinal CardinalBody `json:"cardinal"`
-}
-
-func setCardinal(body *CardinalCreateBody, pw *decayable.Cardinal) {
+func setCardinal(body *request_schema.CardinalCreateBody, pw *decayable.Cardinal) {
 	switch body.Cardinal.Type {
 	case "standard_hll":
 		core := concretecardinal.NewStandardHLL(false, 14, body.Meta.Key)
@@ -48,7 +30,7 @@ func setCardinalMeta(pw *decayable.Cardinal) {
 	))
 }
 
-func CreateCardinal(body *CardinalCreateBody) *decayable.Cardinal {
+func CreateCardinal(body *request_schema.CardinalCreateBody) *decayable.Cardinal {
 	// create cardinal
 	prob := &decayable.Cardinal{}
 	setCardinal(body, prob)

@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	request_schema "gopds/probabilistics/internal/api/schemas/request"
 	"gopds/probabilistics/internal/database/postgres"
 	"gopds/probabilistics/internal/service"
 	"gopds/probabilistics/pkg/models/wrapper"
@@ -11,13 +12,17 @@ import (
 func filterCreate(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(GetBasicInfo(r))
 	var err error
-	body := &service.FilterCreateBody{}
+	body := &request_schema.FilterCreateBody{}
 	loadJson(r.Body, body)
 
 	tx, _ := postgres.Client.Begin()
 
 	pw := service.CreateFilter(body)
 	err = service.SaveFilter(pw, true, true, true, tx)
+
+	if err != nil {
+		http.Error(w, "Failed to save filter: "+err.Error(), http.StatusInternalServerError)
+	}
 
 	wrapperKey := &wrapper.FilterKey{
 		Type:           pw.Core().Meta().FilterType(),
@@ -28,17 +33,13 @@ func filterCreate(w http.ResponseWriter, r *http.Request) {
 
 	wrapper.GetWrapper().AddFilter(*wrapperKey, pw)
 
-	if err != nil {
-		panic(fmt.Sprint("Can't save filter for some reason", err))
-	}
-
 	w.Write([]byte(fmt.Sprint("Created filter", pw)))
 }
 
 func filterExists(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(GetBasicInfo(r))
 
-	body := &service.FilterExistsBody{}
+	body := &request_schema.FilterExistsBody{}
 	loadJson(r.Body, body)
 
 	filterKey := wrapper.FilterKey{
@@ -60,7 +61,7 @@ func filterExists(w http.ResponseWriter, r *http.Request) {
 
 func filterAdd(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(GetBasicInfo(r))
-	body := &service.FilterAddBody{}
+	body := &request_schema.FilterAddBody{}
 	loadJson(r.Body, body)
 
 	filterKey := wrapper.FilterKey{

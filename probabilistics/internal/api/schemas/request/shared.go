@@ -1,4 +1,4 @@
-package service
+package request_schema
 
 type MetaBody struct {
 	Key string `json:"key"`
