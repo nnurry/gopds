@@ -1,6 +1,6 @@
 package abstractfilter
 
-import abstractmeta "gopds/probabilistics/pkg/models/meta/abstract"
+import abstractmeta "github.com/nnurry/gopds/probabilistics/pkg/models/meta/abstract"
 
 type Filter interface {
 	Meta() abstractmeta.FilterMeta

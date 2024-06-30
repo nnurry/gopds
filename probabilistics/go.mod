@@ -1,4 +1,4 @@
-module gopds/probabilistics
+module github.com/nnurry/gopds/probabilistics
 
 go 1.22.3
 

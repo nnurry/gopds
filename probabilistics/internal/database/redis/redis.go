@@ -3,8 +3,9 @@ package myredis
 import (
 	"context"
 	"fmt"
-	"gopds/probabilistics/internal/config"
 	"sync"
+
+	"github.com/nnurry/gopds/probabilistics/internal/config"
 
 	"github.com/redis/go-redis/v9"
 )

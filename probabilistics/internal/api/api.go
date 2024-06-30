@@ -1,8 +1,9 @@
 package api
 
 import (
-	"gopds/probabilistics/internal/api/controllers"
 	"net/http"
+
+	"github.com/nnurry/gopds/probabilistics/internal/api/controllers"
 )
 
 func SetupFilterRoutes(mux *http.ServeMux) {

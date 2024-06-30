@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	"gopds/probabilistics/internal/api"
-	"gopds/probabilistics/internal/database/postgres"
-	"gopds/probabilistics/pkg/models/wrapper"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/nnurry/gopds/probabilistics/internal/api"
+	"github.com/nnurry/gopds/probabilistics/internal/database/postgres"
+	"github.com/nnurry/gopds/probabilistics/pkg/models/wrapper"
 )
 
 func main() {

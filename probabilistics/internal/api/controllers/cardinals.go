@@ -2,11 +2,12 @@ package controllers
 
 import (
 	"fmt"
-	request_schema "gopds/probabilistics/internal/api/schemas/request"
-	"gopds/probabilistics/internal/database/postgres"
-	"gopds/probabilistics/internal/service"
-	"gopds/probabilistics/pkg/models/wrapper"
 	"net/http"
+
+	request_schema "github.com/nnurry/gopds/probabilistics/internal/api/schemas/request"
+	"github.com/nnurry/gopds/probabilistics/internal/database/postgres"
+	"github.com/nnurry/gopds/probabilistics/internal/service"
+	"github.com/nnurry/gopds/probabilistics/pkg/models/wrapper"
 )
 
 func cardinalCreate(w http.ResponseWriter, r *http.Request) {

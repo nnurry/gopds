@@ -3,11 +3,12 @@ package wrapper
 import (
 	"database/sql"
 	"fmt"
-	"gopds/probabilistics/internal/config"
-	"gopds/probabilistics/internal/database/postgres"
-	"gopds/probabilistics/pkg/models/decayable"
-	concretefilter "gopds/probabilistics/pkg/models/filter/concrete"
-	concretemeta "gopds/probabilistics/pkg/models/meta/concrete"
+
+	"github.com/nnurry/gopds/probabilistics/internal/config"
+	"github.com/nnurry/gopds/probabilistics/internal/database/postgres"
+	"github.com/nnurry/gopds/probabilistics/pkg/models/decayable"
+	concretefilter "github.com/nnurry/gopds/probabilistics/pkg/models/filter/concrete"
+	concretemeta "github.com/nnurry/gopds/probabilistics/pkg/models/meta/concrete"
 )
 
 type FilterKey struct {

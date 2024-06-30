@@ -3,12 +3,13 @@ package service
 import (
 	"database/sql"
 	"errors"
-	request_schema "gopds/probabilistics/internal/api/schemas/request"
-	"gopds/probabilistics/internal/config"
-	"gopds/probabilistics/internal/database/postgres"
-	"gopds/probabilistics/pkg/models/decayable"
-	concretefilter "gopds/probabilistics/pkg/models/filter/concrete"
-	concretemeta "gopds/probabilistics/pkg/models/meta/concrete"
+
+	request_schema "github.com/nnurry/gopds/probabilistics/internal/api/schemas/request"
+	"github.com/nnurry/gopds/probabilistics/internal/config"
+	"github.com/nnurry/gopds/probabilistics/internal/database/postgres"
+	"github.com/nnurry/gopds/probabilistics/pkg/models/decayable"
+	concretefilter "github.com/nnurry/gopds/probabilistics/pkg/models/filter/concrete"
+	concretemeta "github.com/nnurry/gopds/probabilistics/pkg/models/meta/concrete"
 )
 
 func setFilter(body *request_schema.FilterCreateBody, pw *decayable.Filter) {

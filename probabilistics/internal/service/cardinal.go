@@ -3,12 +3,13 @@ package service
 import (
 	"database/sql"
 	"errors"
-	request_schema "gopds/probabilistics/internal/api/schemas/request"
-	"gopds/probabilistics/internal/config"
-	"gopds/probabilistics/internal/database/postgres"
-	concretecardinal "gopds/probabilistics/pkg/models/cardinal/concrete"
-	"gopds/probabilistics/pkg/models/decayable"
-	concretemeta "gopds/probabilistics/pkg/models/meta/concrete"
+
+	request_schema "github.com/nnurry/gopds/probabilistics/internal/api/schemas/request"
+	"github.com/nnurry/gopds/probabilistics/internal/config"
+	"github.com/nnurry/gopds/probabilistics/internal/database/postgres"
+	concretecardinal "github.com/nnurry/gopds/probabilistics/pkg/models/cardinal/concrete"
+	"github.com/nnurry/gopds/probabilistics/pkg/models/decayable"
+	concretemeta "github.com/nnurry/gopds/probabilistics/pkg/models/meta/concrete"
 )
 
 func setCardinal(body *request_schema.CardinalCreateBody, pw *decayable.Cardinal) {

@@ -1,8 +1,8 @@
 package concretefilter
 
 import (
-	abstractmeta "gopds/probabilistics/pkg/models/meta/abstract"
-	concretemeta "gopds/probabilistics/pkg/models/meta/concrete"
+	abstractmeta "github.com/nnurry/gopds/probabilistics/pkg/models/meta/abstract"
+	concretemeta "github.com/nnurry/gopds/probabilistics/pkg/models/meta/concrete"
 
 	"github.com/bits-and-blooms/bloom/v3"
 )

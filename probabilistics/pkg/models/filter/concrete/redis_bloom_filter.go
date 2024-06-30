@@ -3,9 +3,10 @@ package concretefilter
 import (
 	"bytes"
 	"fmt"
-	myredis "gopds/probabilistics/internal/database/redis"
-	abstractmeta "gopds/probabilistics/pkg/models/meta/abstract"
-	concretemeta "gopds/probabilistics/pkg/models/meta/concrete"
+
+	myredis "github.com/nnurry/gopds/probabilistics/internal/database/redis"
+	abstractmeta "github.com/nnurry/gopds/probabilistics/pkg/models/meta/abstract"
+	concretemeta "github.com/nnurry/gopds/probabilistics/pkg/models/meta/concrete"
 
 	"github.com/redis/go-redis/v9"
 )

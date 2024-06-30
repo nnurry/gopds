@@ -3,11 +3,12 @@ package wrapper
 import (
 	"database/sql"
 	"fmt"
-	"gopds/probabilistics/internal/config"
-	"gopds/probabilistics/internal/database/postgres"
-	concretecardinal "gopds/probabilistics/pkg/models/cardinal/concrete"
-	"gopds/probabilistics/pkg/models/decayable"
-	concretemeta "gopds/probabilistics/pkg/models/meta/concrete"
+
+	"github.com/nnurry/gopds/probabilistics/internal/config"
+	"github.com/nnurry/gopds/probabilistics/internal/database/postgres"
+	concretecardinal "github.com/nnurry/gopds/probabilistics/pkg/models/cardinal/concrete"
+	"github.com/nnurry/gopds/probabilistics/pkg/models/decayable"
+	concretemeta "github.com/nnurry/gopds/probabilistics/pkg/models/meta/concrete"
 )
 
 type CardinalKey struct {

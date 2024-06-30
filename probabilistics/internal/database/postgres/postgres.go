@@ -3,7 +3,8 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
-	"gopds/probabilistics/internal/config"
+
+	"github.com/nnurry/gopds/probabilistics/internal/config"
 )
 
 var Client *sql.DB

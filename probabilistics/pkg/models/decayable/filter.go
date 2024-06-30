@@ -1,8 +1,8 @@
 package decayable
 
 import (
-	abstractfilter "gopds/probabilistics/pkg/models/filter/abstract"
-	concretemeta "gopds/probabilistics/pkg/models/meta/concrete"
+	abstractfilter "github.com/nnurry/gopds/probabilistics/pkg/models/filter/abstract"
+	concretemeta "github.com/nnurry/gopds/probabilistics/pkg/models/meta/concrete"
 )
 
 type Filter struct {

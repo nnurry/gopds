@@ -1,8 +1,8 @@
 package decayable
 
 import (
-	abstractcardinal "gopds/probabilistics/pkg/models/cardinal/abstract"
-	concretemeta "gopds/probabilistics/pkg/models/meta/concrete"
+	abstractcardinal "github.com/nnurry/gopds/probabilistics/pkg/models/cardinal/abstract"
+	concretemeta "github.com/nnurry/gopds/probabilistics/pkg/models/meta/concrete"
 )
 
 type Cardinal struct {

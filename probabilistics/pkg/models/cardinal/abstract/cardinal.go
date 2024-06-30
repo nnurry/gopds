@@ -1,6 +1,6 @@
 package abstractcardinal
 
-import abstractmeta "gopds/probabilistics/pkg/models/meta/abstract"
+import abstractmeta "github.com/nnurry/gopds/probabilistics/pkg/models/meta/abstract"
 
 type Cardinal interface {
 	Meta() abstractmeta.CardinalMeta

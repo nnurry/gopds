@@ -3,14 +3,15 @@ package wrapper
 import (
 	"context"
 	"fmt"
-	"gopds/probabilistics/internal/config"
-	"gopds/probabilistics/internal/database/postgres"
-	"gopds/probabilistics/internal/service"
-	"gopds/probabilistics/pkg/models/decayable"
 	"net/http"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/nnurry/gopds/probabilistics/internal/config"
+	"github.com/nnurry/gopds/probabilistics/internal/database/postgres"
+	"github.com/nnurry/gopds/probabilistics/internal/service"
+	"github.com/nnurry/gopds/probabilistics/pkg/models/decayable"
 )
 
 type Wrapper struct {
