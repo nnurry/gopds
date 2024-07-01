@@ -2,7 +2,7 @@ package postgres
 
 import (
 	"database/sql"
-	"fmt"
+	"log"
 
 	"github.com/nnurry/gopds/probabilistics/internal/config"
 )
@@ -23,6 +23,6 @@ func init() {
 		panic(err)
 	}
 
-	fmt.Println("Successfully connected to PostgreSQL!")
+	log.Println("Successfully connected to PostgreSQL!")
 
 }

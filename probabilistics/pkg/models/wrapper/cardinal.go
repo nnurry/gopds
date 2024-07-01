@@ -2,7 +2,7 @@ package wrapper
 
 import (
 	"database/sql"
-	"fmt"
+	"log"
 
 	"github.com/nnurry/gopds/probabilistics/internal/config"
 	"github.com/nnurry/gopds/probabilistics/internal/database/postgres"
@@ -45,9 +45,9 @@ func (pw *CardinalWrapper) FetchCardinal(k CardinalKey) *decayable.Cardinal {
 	cardinal := &decayable.Cardinal{}
 
 	switch k.Type {
-	case "standard_hll":
+	case "STANDARD_HLL":
 		cardinal.SetCore(concretecardinal.NewStandardHLL(false, 14, k.Key))
-	case "redis_hll":
+	case "REDIS_HLL":
 		cardinal.SetCore(concretecardinal.NewRedisHLL(k.Key))
 	}
 
@@ -70,14 +70,14 @@ func (pw *CardinalWrapper) FetchCardinal(k CardinalKey) *decayable.Cardinal {
 	}
 
 	if err != nil {
-		fmt.Println("Can't fetch cardinals from db: ", err)
+		log.Println("Can't fetch cardinals from db: ", err)
 		panic(err)
 	}
 
 	cardinal.Core().Meta().SetId(queryStruct.Id)
 	cardinal.Core().Deserialize(queryStruct.Blob)
 
-	fmt.Println(
+	log.Println(
 		"Fetched cardinal:",
 		cardinal.Core().Meta().CardinalType(),
 		cardinal.Core().Meta().Key(),

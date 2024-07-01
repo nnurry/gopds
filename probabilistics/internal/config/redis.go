@@ -1,7 +1,7 @@
 package config
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/caarlos0/env/v11"
 )
@@ -14,7 +14,7 @@ var redisCfg = RedisConfig{}
 
 func LoadRedisConfig() {
 	if err := env.Parse(&redisCfg); err != nil {
-		fmt.Printf("%+v\n", err)
+		log.Printf("%+v\n", err)
 	}
 }
 

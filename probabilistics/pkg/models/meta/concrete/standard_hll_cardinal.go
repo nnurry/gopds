@@ -22,9 +22,9 @@ func (m *StandardHyperLogLogMeta) Key() string {
 	return m.key
 }
 
-func NewStandardHLLMeta(cardinalType string, key string) *StandardHyperLogLogMeta {
+func NewStandardHLLMeta(key string) *StandardHyperLogLogMeta {
 	return &StandardHyperLogLogMeta{
-		cardinalType: cardinalType,
+		cardinalType: "STANDARD_HLL",
 		key:          key,
 	}
 }

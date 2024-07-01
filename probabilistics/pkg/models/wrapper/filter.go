@@ -2,7 +2,7 @@ package wrapper
 
 import (
 	"database/sql"
-	"fmt"
+	"log"
 
 	"github.com/nnurry/gopds/probabilistics/internal/config"
 	"github.com/nnurry/gopds/probabilistics/internal/database/postgres"
@@ -47,9 +47,9 @@ func (pw *FilterWrapper) FetchFilter(k FilterKey) *decayable.Filter {
 	filter := &decayable.Filter{}
 
 	switch k.Type {
-	case "standard_bloom":
+	case "STANDARD_BLOOM":
 		filter.SetCore(concretefilter.NewStandardBF(k.MaxCardinality, k.ErrorRate, k.Key))
-	case "redis_bloom":
+	case "REDIS_BLOOM":
 		filter.SetCore(concretefilter.NewRedisBF(k.MaxCardinality, k.ErrorRate, 2, false, k.Key))
 	}
 
@@ -81,14 +81,14 @@ func (pw *FilterWrapper) FetchFilter(k FilterKey) *decayable.Filter {
 	}
 
 	if err != nil {
-		fmt.Println("Can't fetch filters from db: ", err)
+		log.Println("Can't fetch filters from db: ", err)
 		panic(err)
 	}
 
 	filter.Core().Meta().SetId(queryStruct.Id)
 	filter.Core().Deserialize(queryStruct.Blob)
 
-	fmt.Println(
+	log.Println(
 		"Fetched filter:",
 		filter.Core().Meta().FilterType(),
 		filter.Core().Meta().Key(),

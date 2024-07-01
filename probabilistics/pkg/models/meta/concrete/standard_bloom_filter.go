@@ -51,7 +51,7 @@ func NewStandardBFMeta(
 	_, hashFuncNum := bloom.EstimateParameters(maxCard, maxFp)
 	return &StandardBloomFilterMeta{
 		key:          key,
-		filterType:   "standard_bloom",
+		filterType:   "STANDARD_BLOOM",
 		maxCard:      maxCard,
 		maxFp:        maxFp,
 		hashFuncNum:  hashFuncNum,

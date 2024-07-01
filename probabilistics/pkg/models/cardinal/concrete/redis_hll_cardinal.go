@@ -65,6 +65,6 @@ func NewRedisHLL(key string) *RedisHyperLogLog {
 	hll := &RedisHyperLogLog{}
 	myredis.Initialize()
 	hll.core = myredis.Client
-	hll.meta = concretemeta.NewRedisHLLMeta("redis_hll", key)
+	hll.meta = concretemeta.NewRedisHLLMeta(key)
 	return hll
 }

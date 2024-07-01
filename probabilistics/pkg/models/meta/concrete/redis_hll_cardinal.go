@@ -22,9 +22,9 @@ func (m *RedisHyperLogLogMeta) Key() string {
 	return m.key
 }
 
-func NewRedisHLLMeta(cardinalType string, key string) *RedisHyperLogLogMeta {
+func NewRedisHLLMeta(key string) *RedisHyperLogLogMeta {
 	return &RedisHyperLogLogMeta{
-		cardinalType: cardinalType,
+		cardinalType: "REDIS_HLL",
 		key:          key,
 	}
 }

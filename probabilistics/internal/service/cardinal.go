@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 
-	request_schema "github.com/nnurry/gopds/probabilistics/internal/api/schemas/request"
+	request_schema "github.com/nnurry/gopds/probabilistics/internal/api/rest/schemas/request"
 	"github.com/nnurry/gopds/probabilistics/internal/config"
 	"github.com/nnurry/gopds/probabilistics/internal/database/postgres"
 	concretecardinal "github.com/nnurry/gopds/probabilistics/pkg/models/cardinal/concrete"
@@ -14,10 +14,10 @@ import (
 
 func setCardinal(body *request_schema.CardinalCreateBody, pw *decayable.Cardinal) {
 	switch body.Cardinal.Type {
-	case "standard_hll":
+	case "STANDARD_HLL":
 		core := concretecardinal.NewStandardHLL(false, 14, body.Meta.Key)
 		pw.SetCore(core)
-	case "redis_hll":
+	case "REDIS_HLL":
 		core := concretecardinal.NewRedisHLL(body.Meta.Key)
 		pw.SetCore(core)
 	default:

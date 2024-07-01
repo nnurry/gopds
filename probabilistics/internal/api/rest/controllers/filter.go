@@ -2,16 +2,17 @@ package controllers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
-	request_schema "github.com/nnurry/gopds/probabilistics/internal/api/schemas/request"
+	request_schema "github.com/nnurry/gopds/probabilistics/internal/api/rest/schemas/request"
 	"github.com/nnurry/gopds/probabilistics/internal/database/postgres"
 	"github.com/nnurry/gopds/probabilistics/internal/service"
 	"github.com/nnurry/gopds/probabilistics/pkg/models/wrapper"
 )
 
 func filterCreate(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(GetBasicInfo(r))
+	log.Println(GetBasicInfo(r))
 	var err error
 	body := &request_schema.FilterCreateBody{}
 	loadJson(r.Body, body)
@@ -38,7 +39,7 @@ func filterCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func filterExists(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(GetBasicInfo(r))
+	log.Println(GetBasicInfo(r))
 
 	body := &request_schema.FilterExistsBody{}
 	loadJson(r.Body, body)
@@ -61,7 +62,7 @@ func filterExists(w http.ResponseWriter, r *http.Request) {
 }
 
 func filterAdd(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(GetBasicInfo(r))
+	log.Println(GetBasicInfo(r))
 	body := &request_schema.FilterAddBody{}
 	loadJson(r.Body, body)
 

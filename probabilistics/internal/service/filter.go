@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 
-	request_schema "github.com/nnurry/gopds/probabilistics/internal/api/schemas/request"
+	request_schema "github.com/nnurry/gopds/probabilistics/internal/api/rest/schemas/request"
 	"github.com/nnurry/gopds/probabilistics/internal/config"
 	"github.com/nnurry/gopds/probabilistics/internal/database/postgres"
 	"github.com/nnurry/gopds/probabilistics/pkg/models/decayable"
@@ -14,14 +14,14 @@ import (
 
 func setFilter(body *request_schema.FilterCreateBody, pw *decayable.Filter) {
 	switch body.Filter.Type {
-	case "standard_bloom":
+	case "STANDARD_BLOOM":
 		core := concretefilter.NewStandardBF(
 			body.Filter.MaxCardinality,
 			body.Filter.ErrorRate,
 			body.Meta.Key,
 		)
 		pw.SetCore(core)
-	case "redis_bloom":
+	case "REDIS_BLOOM":
 		core := concretefilter.NewRedisBF(
 			body.Filter.MaxCardinality,
 			body.Filter.ErrorRate,

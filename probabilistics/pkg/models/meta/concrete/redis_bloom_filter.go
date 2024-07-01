@@ -59,7 +59,7 @@ func NewRedisBFMeta(
 	nonScaling bool, key string) *RedisBloomFilterMeta {
 	k := math.Ceil(-(math.Log(maxFp) / math.Log(2)))
 	return &RedisBloomFilterMeta{
-		filterType:      "redis_bloom",
+		filterType:      "REDIS_BLOOM",
 		maxCard:         maxCard,
 		maxFp:           maxFp,
 		hashFuncNum:     uint(k),

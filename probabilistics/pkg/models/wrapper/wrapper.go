@@ -2,7 +2,7 @@ package wrapper
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"sync"
@@ -12,6 +12,7 @@ import (
 	"github.com/nnurry/gopds/probabilistics/internal/database/postgres"
 	"github.com/nnurry/gopds/probabilistics/internal/service"
 	"github.com/nnurry/gopds/probabilistics/pkg/models/decayable"
+	"google.golang.org/grpc"
 )
 
 type Wrapper struct {
@@ -69,14 +70,14 @@ func Synchronize(ticker *time.Ticker, mainWg *sync.WaitGroup, mainDone chan bool
 	go func() {
 		defer func() {
 			mainWg.Done()
-			fmt.Println("Stopped Synchronize goroutines")
+			log.Println("Stopped Synchronize goroutines")
 		}()
 		subWg := sync.WaitGroup{}
 		for {
 			select {
 			case <-mainDone:
 				subWg.Wait()
-				fmt.Println("Synchronize() cleanly stopped")
+				log.Println("Synchronize() cleanly stopped")
 				return
 			case <-ticker.C:
 				decayedFilterKeys = []FilterKey{}
@@ -94,7 +95,7 @@ func Synchronize(ticker *time.Ticker, mainWg *sync.WaitGroup, mainDone chan bool
 						}
 						// Logic to synchronize with database here
 						if err := service.SaveFilter(v, false, false, false, tx); err != nil {
-							fmt.Println("Got error while syncing filter", key, err)
+							log.Println("Got error while syncing filter", key, err)
 						}
 					}(key, filter)
 				}
@@ -108,21 +109,21 @@ func Synchronize(ticker *time.Ticker, mainWg *sync.WaitGroup, mainDone chan bool
 						}
 						// Logic to synchronize with database here
 						if err := service.SaveCardinal(v, false, false, false, tx); err != nil {
-							fmt.Println("Got error while syncing cardinal", key, err)
+							log.Println("Got error while syncing cardinal", key, err)
 						}
 					}(key, cardinal)
 				}
 				subWg.Wait()
 				if len(decayedFilterKeys) > 0 {
 					for _, key := range decayedFilterKeys {
-						fmt.Println("Decayed filter:", key)
+						log.Println("Decayed filter:", key)
 						pw.DeleteFilter(key)
 					}
 				}
 
 				if len(decayedCardinalKeys) > 0 {
 					for _, key := range decayedCardinalKeys {
-						fmt.Println("Decayed cardinal:", key)
+						log.Println("Decayed cardinal:", key)
 						pw.DeleteCardinal(key)
 					}
 				}
@@ -136,20 +137,42 @@ func Synchronize(ticker *time.Ticker, mainWg *sync.WaitGroup, mainDone chan bool
 
 }
 
-func Cleanup(osChan chan os.Signal, srv *http.Server) {
+func Cleanup(osChan chan os.Signal, httpSrv *http.Server, grpcSrv *grpc.Server) {
 	defer DecayWg.Done()
 
 	sig := <-osChan
-	fmt.Println("Encountered signal:", sig.String())
+	log.Println("Encountered signal:", sig.String())
 	DecayTicker.Stop()
 	DecayDone <- true
 
 	time.Sleep(500 * time.Millisecond)
 	close(osChan)
 
-	if err := srv.Shutdown(context.Background()); err != nil {
-		fmt.Printf("HTTP server Shutdown: %v", srv.Shutdown(context.Background()))
+	log.Println("Shutting down HTTP server")
+	if err := httpSrv.Shutdown(context.Background()); err != nil {
+		log.Printf("HTTP server Shutdown: %v", err)
 	}
+
+	log.Println("HTTP server successfully terminated")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	grpcDone := make(chan bool)
+	defer cancel()
+
+	go func() {
+		log.Println("Shutting down gRPC server")
+		grpcSrv.GracefulStop()
+		grpcDone <- true
+	}()
+
+	select {
+	case <-grpcDone:
+		log.Println("gRPC server gracefully terminated")
+	case <-ctx.Done():
+		grpcSrv.Stop()
+		log.Println("gRPC server forcefully terminated")
+	}
+
 	close(DecayDone)
 }
 

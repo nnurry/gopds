@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/caarlos0/env/v11"
 )
@@ -19,7 +20,7 @@ var postgresCfg = PostgresConfig{}
 
 func LoadPostgresConfig() {
 	if err := env.Parse(&postgresCfg); err != nil {
-		fmt.Printf("%+v\n", err)
+		log.Printf("%+v\n", err)
 	}
 }
 

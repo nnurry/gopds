@@ -2,7 +2,7 @@ package myredis
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"sync"
 
 	"github.com/nnurry/gopds/probabilistics/internal/config"
@@ -26,6 +26,6 @@ var Initialize = sync.OnceFunc(func() {
 		panic(err)
 	}
 
-	fmt.Println("Successfully connected to Redis!")
+	log.Println("Successfully connected to Redis!")
 
 })

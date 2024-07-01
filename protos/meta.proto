@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+option go_package = "github.com/nnurry/gopds/protos/meta";
+
+package meta;
+
+import "google/protobuf/timestamp.proto";
+
+// ENUMS
+enum FilterType {
+    STANDARD_BLOOM = 0;
+    REDIS_BLOOM = 1;
+}
+
+enum CardinalType {
+    STANDARD_HLL = 0;
+    REDIS_HLL = 1;
+}
+
+// ------------------------------------------------------------------------
+// MESSAGES
+message MetaField {
+    google.protobuf.Timestamp utc_now = 1;
+    string key = 2;
+    string value = 3;
+}
+
+message FilterField {
+    FilterType type = 1;
+    uint32 max_cardinality = 2;
+    float error_rate = 3;
+}
+
+message CardinalField {
+    CardinalType type = 1;
+}
+
+message IngestRequest {
+    MetaField meta = 1;
+    FilterField filter = 2;
+    CardinalField cardinal = 3;
+}
+
+message BatchIngestResponse {
+    bool success = 1;
+}
+
+// ------------------------------------------------------------------------
+// SERVICES
+service BatchIngest {
+    rpc BatchIngest (stream IngestRequest) returns (BatchIngestResponse);
+    // rpc TestBatchRequests (stream IngestRequest) returns (BatchIngestResponse);
+}

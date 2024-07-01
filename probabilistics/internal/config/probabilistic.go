@@ -1,7 +1,7 @@
 package config
 
 import (
-	"fmt"
+	"log"
 	"time"
 
 	"github.com/caarlos0/env/v11"
@@ -16,6 +16,6 @@ var ProbabilisticCfg = ProbabilisticConfig{}
 
 func init() {
 	if err := env.Parse(&ProbabilisticCfg); err != nil {
-		fmt.Printf("%+v\n", err)
+		log.Printf("%+v\n", err)
 	}
 }

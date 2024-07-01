@@ -43,10 +43,7 @@ func (hll *StandardHyperLogLog) Add(value []byte) error {
 }
 
 func (hll *StandardHyperLogLog) AddString(value string) error {
-	ok := hll.core.Insert([]byte(value))
-	if !ok {
-		return errors.New("can't insert into HLL")
-	}
+	hll.core.Insert([]byte(value))
 	return nil
 }
 
@@ -66,6 +63,6 @@ func NewStandardHLL(sparse bool, precision uint8, key string) *StandardHyperLogL
 		hll.core = hyperloglog.New16NoSparse()
 	}
 
-	hll.meta = concretemeta.NewStandardHLLMeta("standard_hll", key)
+	hll.meta = concretemeta.NewStandardHLLMeta(key)
 	return hll
 }

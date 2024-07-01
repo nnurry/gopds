@@ -2,16 +2,17 @@ package controllers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
-	request_schema "github.com/nnurry/gopds/probabilistics/internal/api/schemas/request"
+	request_schema "github.com/nnurry/gopds/probabilistics/internal/api/rest/schemas/request"
 	"github.com/nnurry/gopds/probabilistics/internal/database/postgres"
 	"github.com/nnurry/gopds/probabilistics/internal/service"
 	"github.com/nnurry/gopds/probabilistics/pkg/models/wrapper"
 )
 
 func cardinalCreate(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(GetBasicInfo(r))
+	log.Println(GetBasicInfo(r))
 	var err error
 	body := &request_schema.CardinalCreateBody{}
 	loadJson(r.Body, body)
@@ -36,7 +37,7 @@ func cardinalCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func cardinalAdd(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(GetBasicInfo(r))
+	log.Println(GetBasicInfo(r))
 	body := &request_schema.CardinalAddBody{}
 	loadJson(r.Body, body)
 
@@ -54,7 +55,7 @@ func cardinalAdd(w http.ResponseWriter, r *http.Request) {
 }
 
 func cardinalCard(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(GetBasicInfo(r))
+	log.Println(GetBasicInfo(r))
 	body := &request_schema.CardinalCardBody{}
 	loadJson(r.Body, body)
 
