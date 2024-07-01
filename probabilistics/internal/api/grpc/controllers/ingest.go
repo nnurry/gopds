@@ -3,6 +3,7 @@ package controllers
 import (
 	"io"
 	"log"
+	"math"
 
 	request_schema "github.com/nnurry/gopds/probabilistics/internal/api/rest/schemas/request"
 	"github.com/nnurry/gopds/probabilistics/internal/database/postgres"
@@ -56,7 +57,7 @@ func (srv *batchIngestServer) BatchIngest(stream pb.BatchIngest_BatchIngestServe
 			Type:           f.GetType().String(),
 			Key:            m.GetKey(),
 			MaxCardinality: uint(f.GetMaxCardinality()),
-			ErrorRate:      float64(f.ErrorRate),
+			ErrorRate:      math.Trunc(float64(f.ErrorRate)*10000000.0) / 10000000,
 		}
 
 		cardinalKey := wrapper.CardinalKey{

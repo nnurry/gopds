@@ -52,10 +52,10 @@ func BatchIngest(client pb.BatchIngestClient) bool {
 	}
 	response := &pb.BatchIngestResponse{}
 
-	stream.CloseSend()
-
-	err = stream.RecvMsg(&response)
-	log.Println("got error while receiving the message: ", err)
+	response, err = stream.CloseAndRecv()
+	if err != nil {
+		log.Println("Can't finish grpc:", err)
+	}
 
 	return response.Success
 }
