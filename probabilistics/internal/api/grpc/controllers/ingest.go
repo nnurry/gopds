@@ -46,6 +46,12 @@ func (srv *batchIngestServer) BatchIngest(stream pb.BatchIngest_BatchIngestServe
 		}
 		if err != nil {
 			log.Println("Can't process batch ingest request", i, " due to", err)
+			err = tx.Commit()
+			if err != nil {
+				tx.Rollback()
+				panic(err)
+			}
+			return err
 		}
 
 		// PREPARING METADATA
